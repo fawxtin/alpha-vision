@@ -10,6 +10,7 @@
 #include <Trends\trends.mqh>
 
 class HMATrend : public Trend {
+   int m_timeframe;
    double m_ma1;
    double m_ma1_i;
    double m_ma2;
@@ -18,16 +19,17 @@ class HMATrend : public Trend {
    public:
       // HMATrend(const Trend &ref): m_trend(ref.m_trend), m_value1(ref.m_value1), m_value1_i(ref.m_value1_i),
       //    m_value2(ref.m_value2), m_value2_i(ref.m_value2_i) { };
-      HMATrend() { };
+      HMATrend(): m_timeframe(0) { };
+      HMATrend(int timeframe): m_timeframe(timeframe) { };
       virtual void calculate(int Period1, int Period2, bool debug=false);
 };
 
 void HMATrend::calculate(int Period1, int Period2, bool debug=false) {
    m_trend = TREND_NEUTRAL;
-   m_ma1 = iCustom(NULL, 0, "hma", Period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
-   m_ma1_i = iCustom(NULL, 0, "hma", Period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
-   m_ma2 = iCustom(NULL, 0, "hma", Period2, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
-   m_ma2_i = iCustom(NULL, 0, "hma", Period2, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
+   m_ma1 = iCustom(NULL, m_timeframe, "hma", Period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
+   m_ma1_i = iCustom(NULL, m_timeframe, "hma", Period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
+   m_ma2 = iCustom(NULL, m_timeframe, "hma", Period2, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
+   m_ma2_i = iCustom(NULL, m_timeframe, "hma", Period2, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
 
    if (debug)
       Print("HMA ", Period1, " (", m_ma1_i, " -> ", m_ma1, ") / MA ", Period2, " (", m_ma2_i, " -> ", m_ma2, ")");

@@ -43,7 +43,7 @@ string Trend::simplify() {
          refTrend = "NEGATIVE";
          break;
       case TREND_NEGATIVE_FROM_POSITIVE:
-         refTrend = "NEGATIVE";
+         refTrend = "POSITIVE";
          break;
       case TREND_NEGATIVE_OVERSOLD:
          refTrend = "NEGATIVE";
@@ -52,7 +52,7 @@ string Trend::simplify() {
          refTrend = "POSITIVE";
          break;
       case TREND_POSITIVE_FROM_NEGATIVE:
-         refTrend = "POSITIVE";
+         refTrend = "NEGATIVE";
          break;
       case TREND_POSITIVE_OVERBOUGHT:
          refTrend = "POSITIVE";
@@ -63,33 +63,6 @@ string Trend::simplify() {
    }
    
    return refTrend;
-}
-
-void Trend::alert(void) {
-   switch (m_trend) {
-      case TREND_NEGATIVE_FROM_POSITIVE:
-         Alert("Cross Signal from Negative to Positive");
-         break;
-      case TREND_NEGATIVE_OVERSOLD:
-         break;
-      case TREND_POSITIVE_FROM_NEGATIVE:
-         Alert("Cross Signal from Positive to Negative");
-         break;
-      case TREND_POSITIVE_OVERBOUGHT:
-         break;
-      case TREND_NEGATIVE:
-      case TREND_POSITIVE:
-      case TREND_NEUTRAL:
-      default:
-         break;
-   }
-
-   // TODO: paste this alert code on AlphaVision class   
-   //if ((majorTrend.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) || (majorTrend.getTrend() == TREND_POSITIVE_FROM_NEGATIVE)) { // Crossing
-   //   Alert("Major Signal Crossing ", majorTrend.simplify(), " (Minor Signal ", minorTrend.simplify(), ")");
-   //} else if ((minorTrend.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) || (minorTrend.getTrend() == TREND_POSITIVE_FROM_NEGATIVE)) { // Crossing
-   //   Alert("Minor Signal Crossing ", minorTrend.simplify(), " (Major Signal ", majorTrend.simplify(), ")");
-   //}
 }
 
 
