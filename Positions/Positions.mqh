@@ -71,9 +71,11 @@ class Positions {
       void loadCurrentOrders(bool noMagicMA=false);
       bool add(Position *position);
       bool close(int idx);
+      void clear();
       int count() { return m_positions.length(); }
       
       int lastBar() { return m_lastBar; }
+      void setLastBar(int bar) { m_lastBar = bar; }
       
       bool isLastBarP(int barN) {
          if (barN > m_lastBar) {
@@ -81,6 +83,13 @@ class Positions {
             return true;
          }
          return false;
+      }
+      
+      Position *operator[](int index) {
+         if (index < 0 || index >= m_positions.length())
+            return NULL;
+      
+         return m_positions[index];
       }
       
       
@@ -107,6 +116,8 @@ class Positions {
 
 bool Positions::add(Position *position) {
    if (count() < MAX_POSITIONS) {
+      Print("[Positions.add]");
+      position.print();
       m_positions.add(position);
       this.isLastBarP(position.barOnOpen());
       
@@ -120,6 +131,12 @@ bool Positions::close(int idx) {
    // check which position is last after this one is removed
    m_positions.drop(idx);
    return true;
+}
+
+void Positions::clear() {
+   while (this.count() > 0) {
+      this.close(0);
+   }
 }
 
 void Positions::loadCurrentOrders(bool noMagicMA=false) { // could be LONG / SHORT
