@@ -117,19 +117,24 @@ void calculateTrends() {
 void tradeOnTrends(HMATrend *mtMajor, HMATrend *mtMinor, HMATrend *ctMajor, HMATrend *ctMinor) {
    /*
     * Create an Alpha Vision class handling the trends and positions
+    * New Approach: Crossing signals means points of support and resistence,
+    *    depending on the major timeframe trend will take different actions
+    *    on these lines (moving pivot?)
     *
     * Problems to solve:
-    *    a) OK do not execute the same signal more than once
-    *    b) Position opening with target/stopLoss:
+    *    a) Position opening with target/stopLoss:
     *       1) Trend POSITIVE (mtMajor POSITIVE & mtMinor POSITIVE)
-    *          Open long on crossing up from ctMinor and ctMajor
-    *          Close only when mtMinor turns NEGATIVE (enters NEUTRAL)
-    *       2) Trend NEUTRAL (mtMajor != mtMinor)
-    *          Cover short & Open long on crossing up / from ctMinor and ctMajor
-    *          Close long & Open short on crossing down / from ctMinor and ctMajor
+    *          Open buy limit on crossing up region from ctMinor and ctMajor
+    *          Close signal and range when mtMinor turns NEGATIVE (enters NEUTRAL)
+    *       
+    *       2) Trend NEUTRAL / Trading Range (mtMajor != mtMinor)
+    *          Fast moves... Try to find trading rage from last current signals
+    *          Open and close positions or later hedge through based on 
+    *          found support and resistance points
+    *          
     *       3) Trend NEGATIVE (mtMajor NEGATIVE & mtMinor NEGATIVE)
-    *          Open short on crossing down from ctMinor and ctMajor
-    *          Close only when mtMinor turns POSITIVE (enters NEUTRAL)
+    *          Open sell limit on crossing down region from ctMinor and ctMajor
+    *          Close signal and range when mtMinor turns POSITIVE (enters NEUTRAL)
     *
     */
    
@@ -154,11 +159,11 @@ void tradeSimple(HMATrend *major, HMATrend *minor) {
    switch (minor.getTrend()) {
       case TREND_POSITIVE_FROM_NEGATIVE: // go long
          coverShorts();
-         goLong(major, minor);
+         goLong(minor.getMAPeriod1());
          break;
       case TREND_NEGATIVE_FROM_POSITIVE: // go short
          sellLongs();
-         goShort(major, minor);
+         goShort(minor.getMAPeriod1());
          break;
       default:
          break;
@@ -179,26 +184,30 @@ void tradeNeutralTrend(HMATrend *major, HMATrend *minor) {
       switch (minor.getTrend()) {
          case TREND_POSITIVE_FROM_NEGATIVE: // go long
             coverShorts();
-            goLong(major, minor);
+            goLong(minor.getMAPeriod1());
             break;
          case TREND_NEGATIVE_FROM_POSITIVE: // go short
             sellLongs();
-            goShort(major, minor);
+            goShort(minor.getMAPeriod1());
             break;
          default:
             break;
       }
    } else if (minor.simplify() == "POSITIVE") { // trending positive - trade when crossing
-      if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE ||
-          major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+      if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
          coverShorts();
-         goLong(major, minor);
+         goLong(minor.getMAPeriod1());
+      } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+         coverShorts();
+         goLong(major.getMAPeriod1());
       }
    } else { // trending negative / trade when crossing
-      if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE ||
-          major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+      if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
          sellLongs();
-         goShort(major, minor);
+         goShort(major.getMAPeriod1());
+      } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+         sellLongs();
+         goShort(major.getMAPeriod1());
       }
    }   
 }
@@ -209,9 +218,10 @@ void tradePositiveTrend(HMATrend *major, HMATrend *minor, int mtMinorTrend) {
       return;
    }
    
-   if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE ||
-       major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goLong(major, minor);
+   if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+      goLong(minor.getMAPeriod1());
+   } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+      goLong(major.getMAPeriod1());
    }
 }
 
@@ -221,21 +231,18 @@ void tradeNegativeTrend(HMATrend *major, HMATrend *minor, int mtMinorTrend) {
       return;
    }
 
-   if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE ||
-       major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goShort(major, minor);
+   if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+      goShort(minor.getMAPeriod1());
+   } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+      goShort(major.getMAPeriod1());
    }
 }
 
-void goLong(HMATrend *major, HMATrend *minor) {
+void goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
    if (gLongPositions.lastBar() == Bars || gLongPositions.count() >= MAX_POSITIONS) return; // already traded / full
    //OrderSend
-   if (iDebug) {
-      PrintFormat("[AV.CT.HMA] Major Signal (%d -> %s) / Minor signal (%d -> %s) / [last bar %d/current bar %d]",
-                  major.getTrend(), major.simplify(), minor.getTrend(), minor.simplify(), gLongPositions.lastBar(), Bars);
-   }
    double price = Ask;
-   int ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, 0, 0, "", MAGICMA, clrAliceBlue);
+   int ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrAliceBlue);
    if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
       gLongPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
                                       OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
@@ -261,15 +268,11 @@ void sellLongs() {
    }
 }
 
-void goShort(HMATrend *major, HMATrend *minor) {
+void goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
    if (gShortPositions.lastBar() == Bars || gShortPositions.count() >= MAX_POSITIONS) return; // already traded?
    // short trades
-   if (iDebug) {
-      PrintFormat("[AV.CT.HMA] Major Signal (%d -> %s) / Minor signal (%d -> %s) / [last bar %d/current bar %d]",
-                  major.getTrend(), major.simplify(), minor.getTrend(), minor.simplify(), gShortPositions.lastBar(), Bars);
-   }
    double price = Bid;
-   int ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, 0, 0, "", MAGICMA, clrPink);
+   int ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrPink);
    if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
       gShortPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
@@ -292,5 +295,12 @@ void coverShorts() {
       PrintFormat("[AV.coverShorts] Closed %d orders (size %.2f) / (sell MP %.4f -> cover at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
       gShortPositions.clear();
+   }
+}
+
+void debugPrintSignal(HMATrend *major, HMATrend *minor, Positions *positions) {
+   if (iDebug) {
+      PrintFormat("[AV.CT.HMA] Major Signal (%d -> %s) / Minor signal (%d -> %s) / [last bar %d/current bar %d]",
+                  major.getTrend(), major.simplify(), minor.getTrend(), minor.simplify(), positions.lastBar(), Bars);
    }
 }

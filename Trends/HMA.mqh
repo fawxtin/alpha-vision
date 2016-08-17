@@ -22,6 +22,9 @@ class HMATrend : public Trend {
       HMATrend(): m_timeframe(0) { };
       HMATrend(int timeframe): m_timeframe(timeframe) { };
       virtual void calculate(int Period1, int Period2, bool debug=false);
+      
+      double getMAPeriod1() { return m_ma1; }
+      double getMAPeriod2() { return m_ma2; }
 };
 
 void HMATrend::calculate(int Period1, int Period2, bool debug=false) {

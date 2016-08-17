@@ -13,7 +13,7 @@
 #define POSITIONS_BASIC 1
 
 #define MAGICMA         19851408
-#define MAX_POSITIONS   8
+#define MAX_POSITIONS   12
 #define LOT_SIZE        0.01
 
 
