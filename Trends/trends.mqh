@@ -8,7 +8,7 @@
 #property strict
 
 #ifndef __TRENDS__
-#define TRENDS "TRENDS"
+#define __TRENDS__ "TRENDS"
 
 #define TREND_POSITIVE_BREAKOUT       4
 #define TREND_POSITIVE_OVERBOUGHT     3

@@ -7,10 +7,10 @@
 #property link      "https://www.mql5.com"
 #property strict
 
-#include <Positions\LList.mqh>
+#include <Arrays\LList.mqh>
 
-#ifndef POSITIONS_BASIC
-#define POSITIONS_BASIC 1
+#ifndef __POSITIONS_BASIC__
+#define __POSITIONS_BASIC__ 1
 
 #define MAGICMA         19851408
 #define MAX_POSITIONS   12
@@ -73,6 +73,7 @@ class Positions {
       bool close(int idx);
       void clear();
       int count() { return m_positions.length(); }
+      string orderType() { return m_orderType; }
       
       int lastBar() { return m_lastBar; }
       void setLastBar(int bar) { m_lastBar = bar; }
