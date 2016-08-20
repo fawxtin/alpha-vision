@@ -12,8 +12,10 @@
 #include <Trends\HMA.mqh>
 
 #include <Positions\Positions.mqh>
-
+#include <Positions\Trader.mqh>
 #include <Signals\AlphaVision.mqh>
+
+
 
 ////
 //// INPUTS
@@ -52,37 +54,34 @@ input int iMajorTimeFrame = PERIOD_H4;
 ////
 //// GLOBALS
 ////
-Positions *gLongPositions;
-Positions *gShortPositions;
-AlphaVision *gAlphaVisionCt; // Current Timeframe
-AlphaVision *gAlphaVisionMt; // Major Timeframe
-AlphaVision *gAlphaVisionFt; // Fast Timeframe
+AlphaVisionSignals *gAlphaVisionSignals; // all AV signals
+Trader *gTrader; // Orders maker
 
+int gCurrentTimeFrame;
 int gCountMinutes;
 
 int OnInit() {
-   if (Period() >= iMajorTimeFrame) {
+   gCurrentTimeFrame = Period();
+   
+   if (gCurrentTimeFrame >= iMajorTimeFrame) {
       Alert("Current timeframe is equal/higher than Major timeframe");
       return INIT_PARAMETERS_INCORRECT;
+   } else if (gCurrentTimeFrame <= iFastTimeFrame) {
+      Alert("Current timeframe is equal/lower than Fast timeframe");
+      return INIT_PARAMETERS_INCORRECT;   
    }
+
    // loading current positions
-   gLongPositions = new Positions("LONG");
-   gShortPositions = new Positions("SHORT");
-   gLongPositions.loadCurrentOrders();
-   gShortPositions.loadCurrentOrders();
+   gTrader = new Trader(new Positions("LONG"), new Positions("SHORT"));
+   gTrader.loadCurrentOrders();
    
-   // pushing trends to AlphaVision signal
-   HMATrend *ctMajor = new HMATrend(0, iPeriod2, iPeriod3);
-   HMATrend *ctMinor = new HMATrend(0, iPeriod1, iPeriod2);
-   gAlphaVisionCt = new AlphaVision(ctMajor, ctMinor);
-   
-   HMATrend *mtMajor = new HMATrend(iMajorTimeFrame, iPeriod2, iPeriod3);
-   HMATrend *mtMinor = new HMATrend(iMajorTimeFrame, iPeriod1, iPeriod2);
-   gAlphaVisionMt = new AlphaVision(mtMajor, mtMinor);
-   
-   HMATrend *ftMajor = new HMATrend(iFastTimeFrame, iPeriod2, iPeriod3);
-   HMATrend *ftMinor = new HMATrend(iFastTimeFrame, iPeriod1, iPeriod2);
-   gAlphaVisionFt = new AlphaVision(ftMajor, ftMinor);
+   gAlphaVisionSignals = new AlphaVisionSignals();
+   gAlphaVisionSignals.initOn(gCurrentTimeFrame, iPeriod1, iPeriod2, iPeriod3);
+   gAlphaVisionSignals.calculateOn(gCurrentTimeFrame);
+   gAlphaVisionSignals.initOn(iMajorTimeFrame, iPeriod1, iPeriod2, iPeriod3);
+   gAlphaVisionSignals.calculateOn(iMajorTimeFrame);
+   gAlphaVisionSignals.initOn(iFastTimeFrame, iPeriod1, iPeriod2, iPeriod3);
+   gAlphaVisionSignals.calculateOn(iFastTimeFrame);
 
    gCountMinutes = 0;
    EventSetTimer(1 * 60); // Every 1 minute, call onTimer
@@ -95,14 +94,11 @@ void OnDeinit(const int reason) {
    EventKillTimer();
    
    // positions list
-   delete gLongPositions;
-   delete gShortPositions;
+   delete gTrader;
    
    // Signals
-   delete gAlphaVisionCt;
-   delete gAlphaVisionMt;
-   delete gAlphaVisionFt;
-   
+   delete gAlphaVisionSignals;
+
    // TODO: add results calculi
    
    Print("Bye Bye!");
@@ -113,9 +109,9 @@ void OnTimer() {
    else gCountMinutes++;
 
    if (gCountMinutes % 3 == 0) { // every 3 minutes
-      gAlphaVisionCt.calculate();  // usually hours
+      gAlphaVisionSignals.calculateOn(gCurrentTimeFrame);
    } else if (gCountMinutes % 15 == 0) { // every 15 minutes
-      gAlphaVisionMt.calculate(); // usually 4H or Daily
+      gAlphaVisionSignals.calculateOn(iMajorTimeFrame);
    } else if (gCountMinutes % 28 == 0) {
       // calculate gAlphaVisionSuper - on weekly   
    }
@@ -131,7 +127,6 @@ void OnTick() {
       return;
    }
 
-   gAlphaVisionFt.calculate();
    calculateTrends();
 }
 
@@ -144,7 +139,7 @@ void calculateTrends() {
    //}
    
    // TODO: Execute a trade according to trend values
-   gAlphaVisionFt.calculate();
+   gAlphaVisionSignals.calculateOn(iFastTimeFrame);
    tradeOnTrends();
 }
 
@@ -171,12 +166,15 @@ void tradeOnTrends() {
     *          Close signal and range when mtMinor turns POSITIVE (enters NEUTRAL)
     *
     */
-   HMATrend *mtMajor = gAlphaVisionMt.m_hmaMajor;
-   HMATrend *mtMinor = gAlphaVisionMt.m_hmaMinor;
-   HMATrend *ctMajor = gAlphaVisionCt.m_hmaMajor;
-   HMATrend *ctMinor = gAlphaVisionCt.m_hmaMinor;
-   HMATrend *ftMajor = gAlphaVisionFt.m_hmaMajor;
-   HMATrend *ftMinor = gAlphaVisionFt.m_hmaMinor;
+   AlphaVision *avMt = gAlphaVisionSignals.getAlphaVisionOn(iMajorTimeFrame);
+   HMATrend *mtMajor = avMt.m_hmaMajor;
+   HMATrend *mtMinor = avMt.m_hmaMinor;
+   AlphaVision *avCt = gAlphaVisionSignals.getAlphaVisionOn(gCurrentTimeFrame);
+   HMATrend *ctMajor = avCt.m_hmaMajor;
+   HMATrend *ctMinor = avCt.m_hmaMinor;
+   AlphaVision *avFt = gAlphaVisionSignals.getAlphaVisionOn(iFastTimeFrame);
+   HMATrend *ftMajor = avFt.m_hmaMajor;
+   HMATrend *ftMinor = avFt.m_hmaMinor;
 
    string mtMajorSimplified = mtMajor.simplify();
    string mtMinorSimplified = mtMinor.simplify();
@@ -279,23 +277,25 @@ void tradeNegativeTrend(HMATrend *major, HMATrend *minor, int mtMinorTrend) {
 }
 
 void goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
-   if (gLongPositions.lastBar() == Bars || gLongPositions.count() >= MAX_POSITIONS) return; // already traded / full
+   Positions *lp = gTrader.getLongPositions();
+   if (lp.lastBar() == Bars || lp.count() >= MAX_POSITIONS) return; // already traded / full
    //OrderSend
    double price = Ask;
    int ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrAliceBlue);
    if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-      gLongPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
+      lp.add(new Position(ticket, OrderOpenTime(), OrderLots(),
                                       OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
-      gLongPositions.setLastBar(Bars);
+      lp.setLastBar(Bars);
    }
 }
 
 void sellLongs() {
+   Positions *lp = gTrader.getLongPositions();
    double price = Bid;
-   int oCount = gLongPositions.count();
-   PositionValue fullPosition = gLongPositions.meanPositionValue();
+   int oCount = lp.count();
+   PositionValue fullPosition = lp.meanPositionValue();
    for (int i = 0; i < oCount; i++) {
-      Position *p = gLongPositions[i];
+      Position *p = lp[i];
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
          PrintFormat("[AV.sellLongs.%d/%d] Closing order %d (buy price %.4f -> sell price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
@@ -304,28 +304,30 @@ void sellLongs() {
    if (oCount > 0) {
       PrintFormat("[AV.sellLongs] Closed %d orders (size %.2f) / (long MP %.4f -> sell at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
-      gLongPositions.clear();
+      lp.clear();
    }
 }
 
 void goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
-   if (gShortPositions.lastBar() == Bars || gShortPositions.count() >= MAX_POSITIONS) return; // already traded?
+   Positions *sp = gTrader.getShortPositions();
+   if (sp.lastBar() == Bars || sp.count() >= MAX_POSITIONS) return; // already traded?
    // short trades
    double price = Bid;
    int ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrPink);
    if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-      gShortPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
+      sp.add(new Position(ticket, OrderOpenTime(), OrderLots(),
                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
-      gShortPositions.setLastBar(Bars);
+      sp.setLastBar(Bars);
    }
 }
 
 void coverShorts() {
+   Positions *sp = gTrader.getShortPositions();
    double price = Ask;
-   int oCount = gShortPositions.count();
-   PositionValue fullPosition = gShortPositions.meanPositionValue();
+   int oCount = sp.count();
+   PositionValue fullPosition = sp.meanPositionValue();
    for (int i = 0; i < oCount; i++) {
-      Position *p = gShortPositions[i];
+      Position *p = sp[i];
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
          PrintFormat("[AV.coverShorts.%d/%d] Closing order %d (sell price %.4f -> buy price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
@@ -334,7 +336,7 @@ void coverShorts() {
    if (oCount > 0) {
       PrintFormat("[AV.coverShorts] Closed %d orders (size %.2f) / (sell MP %.4f -> cover at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
-      gShortPositions.clear();
+      sp.clear();
    }
 }
 
