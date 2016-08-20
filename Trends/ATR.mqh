@@ -9,12 +9,15 @@
 
 // #include <Trends\trends.mqh>
 
+#ifndef __TRENDS_ATR__
+#define __TRENDS_ATR__
+
 class ATRdelta {
    public:
       int m_timeframe;
       double m_atr1;
       double m_atr1_i;
-      double m_atr2:
+      double m_atr2;
       double m_atr2_i;
       
       ATRdelta(int timeframe, int Period1, int Period2) {
@@ -31,6 +34,8 @@ class ATRdelta {
             return price - atrMean;
          else if (orderType == "SHORT")
             return price + atrMean;
+         else
+            return 0;
       }
       
       double getTargetProfitFor(string orderType, double price) {
@@ -39,6 +44,10 @@ class ATRdelta {
             return price + atrMean;
          else if (orderType == "SHORT")
             return price - atrMean;
+         else
+            return 0;
       }
  
-}
+};
+
+#endif

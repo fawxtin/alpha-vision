@@ -13,6 +13,8 @@
 
 #include <Positions\Positions.mqh>
 
+#include <Signals\AlphaVision.mqh>
+
 ////
 //// INPUTS
 ////
@@ -21,6 +23,7 @@ input int iPeriod2 = 50;
 input int iPeriod3 = 200;
 // TODO: input higher time interval than current
 input bool iDebug = True;
+input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 
 /*
@@ -51,25 +54,71 @@ input int iMajorTimeFrame = PERIOD_H4;
 ////
 Positions *gLongPositions;
 Positions *gShortPositions;
+AlphaVision *gAlphaVisionCt; // Current Timeframe
+AlphaVision *gAlphaVisionMt; // Major Timeframe
+AlphaVision *gAlphaVisionFt; // Fast Timeframe
+
+int gCountMinutes;
 
 int OnInit() {
-   // TODO: load current positions
    if (Period() >= iMajorTimeFrame) {
       Alert("Current timeframe is equal/higher than Major timeframe");
       return INIT_PARAMETERS_INCORRECT;
    }
+   // loading current positions
    gLongPositions = new Positions("LONG");
    gShortPositions = new Positions("SHORT");
    gLongPositions.loadCurrentOrders();
    gShortPositions.loadCurrentOrders();
+   
+   // pushing trends to AlphaVision signal
+   HMATrend *ctMajor = new HMATrend(0, iPeriod2, iPeriod3);
+   HMATrend *ctMinor = new HMATrend(0, iPeriod1, iPeriod2);
+   gAlphaVisionCt = new AlphaVision(ctMajor, ctMinor);
+   
+   HMATrend *mtMajor = new HMATrend(iMajorTimeFrame, iPeriod2, iPeriod3);
+   HMATrend *mtMinor = new HMATrend(iMajorTimeFrame, iPeriod1, iPeriod2);
+   gAlphaVisionMt = new AlphaVision(mtMajor, mtMinor);
+   
+   HMATrend *ftMajor = new HMATrend(iFastTimeFrame, iPeriod2, iPeriod3);
+   HMATrend *ftMinor = new HMATrend(iFastTimeFrame, iPeriod1, iPeriod2);
+   gAlphaVisionFt = new AlphaVision(ftMajor, ftMinor);
+
+   gCountMinutes = 0;
+   EventSetTimer(1 * 60); // Every 1 minute, call onTimer
+ 
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason) {
-   //EventKillTimer();
-   Print("Bye Bye!");
+   // timer
+   EventKillTimer();
+   
+   // positions list
    delete gLongPositions;
    delete gShortPositions;
+   
+   // Signals
+   delete gAlphaVisionCt;
+   delete gAlphaVisionMt;
+   delete gAlphaVisionFt;
+   
+   // TODO: add results calculi
+   
+   Print("Bye Bye!");
+}
+
+void OnTimer() {
+   if (gCountMinutes >= 60) gCountMinutes = 0; // 1 hour has passed
+   else gCountMinutes++;
+
+   if (gCountMinutes % 3 == 0) { // every 3 minutes
+      gAlphaVisionCt.calculate();  // usually hours
+   } else if (gCountMinutes % 15 == 0) { // every 15 minutes
+      gAlphaVisionMt.calculate(); // usually 4H or Daily
+   } else if (gCountMinutes % 28 == 0) {
+      // calculate gAlphaVisionSuper - on weekly   
+   }
 }
 
 void OnTick() {
@@ -82,22 +131,11 @@ void OnTick() {
       return;
    }
 
+   gAlphaVisionFt.calculate();
    calculateTrends();
 }
 
 void calculateTrends() {
-   // HMA current timeframe minor and major trend
-   HMATrend *ctMajor = new HMATrend();
-   ctMajor.calculate(iPeriod2, iPeriod3);
-   HMATrend *ctMinor = new HMATrend();
-   ctMinor.calculate(iPeriod1, iPeriod2);
-   
-   // HMA major timeframe minor and major trends
-   HMATrend *mtMajor = new HMATrend(iMajorTimeFrame);
-   mtMajor.calculate(iPeriod2, iPeriod3);
-   HMATrend *mtMinor = new HMATrend(iMajorTimeFrame);
-   mtMinor.calculate(iPeriod1, iPeriod2);
-   
    //if (iDebug) {
    //   PrintFormat("[AV.MT.HMA] Major signal %s / Minor signal %s",
    //               mtMajor.simplify(), mtMinor.simplify());
@@ -106,15 +144,11 @@ void calculateTrends() {
    //}
    
    // TODO: Execute a trade according to trend values
-   tradeOnTrends(mtMajor, mtMinor, ctMajor, ctMinor);
-   
-   delete ctMajor;
-   delete ctMinor;
-   delete mtMajor;
-   delete mtMinor;
+   gAlphaVisionFt.calculate();
+   tradeOnTrends();
 }
 
-void tradeOnTrends(HMATrend *mtMajor, HMATrend *mtMinor, HMATrend *ctMajor, HMATrend *ctMinor) {
+void tradeOnTrends() {
    /*
     * Create an Alpha Vision class handling the trends and positions
     * New Approach: Crossing signals means points of support and resistence,
@@ -137,11 +171,17 @@ void tradeOnTrends(HMATrend *mtMajor, HMATrend *mtMinor, HMATrend *ctMajor, HMAT
     *          Close signal and range when mtMinor turns POSITIVE (enters NEUTRAL)
     *
     */
-   
+   HMATrend *mtMajor = gAlphaVisionMt.m_hmaMajor;
+   HMATrend *mtMinor = gAlphaVisionMt.m_hmaMinor;
+   HMATrend *ctMajor = gAlphaVisionCt.m_hmaMajor;
+   HMATrend *ctMinor = gAlphaVisionCt.m_hmaMinor;
+   HMATrend *ftMajor = gAlphaVisionFt.m_hmaMajor;
+   HMATrend *ftMinor = gAlphaVisionFt.m_hmaMinor;
+
    string mtMajorSimplified = mtMajor.simplify();
    string mtMinorSimplified = mtMinor.simplify();
    
-   tradeSimple(ctMajor, ctMinor);
+   tradeSimple(ftMajor, ftMinor);
    /*
    if (mtMajorSimplified != mtMinorSimplified) { // Neutral trend
       tradeNeutralTrend(ctMajor, ctMinor);
