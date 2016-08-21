@@ -22,7 +22,7 @@ class StochasticTrend : public Trend {
       int m_period1;
       int m_period2;
       
-      StochasticTrend() {};
+      StochasticTrend() { m_trendType = "STOCHASTIC"; };
       
 };
 

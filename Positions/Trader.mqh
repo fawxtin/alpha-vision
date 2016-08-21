@@ -7,12 +7,23 @@
 #property link      "https://www.mql5.com"
 #property strict
 
+#include <stdlib.mqh>
+
 #include <Positions\Positions.mqh>
 #include <Signals\AlphaVision.mqh>
 
 
 #ifndef __POSITIONS_TRADER__
 #define __POSITIONS_TRADER__ true
+
+#define EXPIRE_NEVER D'2017.01.01 23:59:59'   // 60 * 60 * 24 * 7
+
+double normalizePrice(double val, int s=4) {
+   if (s == 2)
+      return StringToDouble(StringFormat("%.2f", val));
+   else
+      return StringToDouble(StringFormat("%.4f", val));
+}
 
 class Trader {
    protected:
@@ -42,7 +53,6 @@ class Trader {
       
       // trader executing signals
       void tradeOnTrends();
-      void tradeSimple();
       void tradeNeutralTrend();
       void tradeNegativeTrend();
       void tradePositiveTrend();
@@ -96,26 +106,6 @@ void Trader::tradeOnTrends() {
    }
 }
 
-void Trader::tradeSimple() {
-   SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
-   HMATrend *major = avFt.m_hmaMajor;
-   HMATrend *minor = avFt.m_hmaMinor;
-
-   switch (minor.getTrend()) {
-      case TREND_POSITIVE_FROM_NEGATIVE: // go long
-         coverShorts();
-         goLong(minor.getMAPeriod1());
-         break;
-      case TREND_NEGATIVE_FROM_POSITIVE: // go short
-         sellLongs();
-         goShort(minor.getMAPeriod1());
-         break;
-      default:
-         break;
-   }
-}
-
 void Trader::tradeNeutralTrend() {
    /* neutral territory, scalp setup
     * 1) major != minor
@@ -127,19 +117,25 @@ void Trader::tradeNeutralTrend() {
    
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
+   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
+   BBTrend *bb = avCt.m_bb;
 
    if (major.simplify() != minor.simplify()) { // undecision
       // go with minor trend scalps
       switch (minor.getTrend()) {
          case TREND_POSITIVE_FROM_NEGATIVE: // go long
-            coverShorts();
-            goLong(minor.getMAPeriod1());
+            //coverShorts();
+            if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+               goLong(bb.m_bbMiddle, bb.m_bbTop);
+            goLong(bb.m_bbBottom, bb.m_bbTop);
             break;
          case TREND_NEGATIVE_FROM_POSITIVE: // go short
-            sellLongs();
-            goShort(minor.getMAPeriod1());
+            //sellLongs();
+            if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+               goShort(bb.m_bbMiddle, bb.m_bbBottom);
+            goShort(bb.m_bbTop, bb.m_bbBottom);
             break;
          default:
             break;
@@ -147,20 +143,28 @@ void Trader::tradeNeutralTrend() {
    } else if (minor.simplify() == "POSITIVE") { // trending positive - trade when crossing
       if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
          coverShorts();
-         goLong(minor.getMAPeriod1());
+         if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+            goLong(bb.m_bbMiddle, bb.m_bbTop);
+         goLong(bb.m_bbBottom, bb.m_bbTop);
       } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
          coverShorts();
-         goLong(major.getMAPeriod1());
+         if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+            goLong(bb.m_bbMiddle, bb.m_bbTop);
+         goLong(bb.m_bbBottom, bb.m_bbTop);
       }
    } else { // trending negative / trade when crossing
       if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
          sellLongs();
-         goShort(major.getMAPeriod1());
+         if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+            goShort(bb.m_bbMiddle, bb.m_bbBottom);
+         goShort(bb.m_bbTop, bb.m_bbBottom);
       } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
          sellLongs();
-         goShort(major.getMAPeriod1());
+         if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+            goShort(bb.m_bbMiddle, bb.m_bbBottom);
+         goShort(bb.m_bbTop, bb.m_bbBottom);
       }
-   }   
+   }
 }
 
 void Trader::tradePositiveTrend() {
@@ -170,6 +174,7 @@ void Trader::tradePositiveTrend() {
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
+   BBTrend *bb = avCt.m_bb;
 
    int superMinorTrend = ctMinor.getTrend();
    if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
@@ -178,9 +183,13 @@ void Trader::tradePositiveTrend() {
    }
    
    if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goLong(minor.getMAPeriod1());
+      if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+         goLong(bb.m_bbMiddle);
+      goLong(bb.m_bbBottom);
    } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goLong(major.getMAPeriod1());
+      if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+         goLong(bb.m_bbMiddle);
+      goLong(bb.m_bbBottom);
    }
 }
 
@@ -191,6 +200,7 @@ void Trader::tradeNegativeTrend() {
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
+   BBTrend *bb = avCt.m_bb;
 
    int superMinorTrend = ctMinor.getTrend();
    if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
@@ -199,23 +209,79 @@ void Trader::tradeNegativeTrend() {
    }
 
    if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goShort(minor.getMAPeriod1());
+      if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+         goShort(bb.m_bbMiddle);
+      goShort(bb.m_bbTop);
    } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goShort(major.getMAPeriod1());
+      if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+         goShort(bb.m_bbMiddle);
+      goShort(bb.m_bbTop);
    }
 }
 
 //// Executing Orders
+/*
+ * Orders shall be executed on timeframe and given a reason.
+ * 
+ */
 
 void Trader::goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
    if (m_longPositions.lastBar() == Bars || m_longPositions.count() >= MAX_POSITIONS) return; // already traded / full
    //OrderSend
+   int vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
+   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / 100;
+   int ticket;
    double price = Ask;
-   int ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrAliceBlue);
-   if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
+   if (MathAbs(price - signalPrice) < vspread) { // buy market
+      PrintFormat("[Av.goLong] opening At market (%.4f, %.4f => %.4f)", price, signalPrice, vspread);
+      ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, 0, clrAliceBlue);
+   } else if (signalPrice < price) { // buy limit
+      PrintFormat("[Av.goLong] opening Limit at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+                         stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
+   } else {// buy stop
+      PrintFormat("[Av.goLong] opening Stop at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+                         stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
+   }
+   
+   if (ticket == -1) {
+      int check = GetLastError();
+      PrintFormat("[Av.goLong] ERROR opening order: %d / %s", check, ErrorDescription(check));
+   } else if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
       m_longPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
       m_longPositions.setLastBar(Bars);
+   } 
+}
+
+void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
+   if (m_shortPositions.lastBar() == Bars || m_shortPositions.count() >= MAX_POSITIONS) return; // already traded?
+   // short trades
+   int vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
+   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / 100;
+   int ticket;
+   double price = Bid;
+   if (MathAbs(price - signalPrice) < vspread) { // sell market
+      PrintFormat("[Av.goShort] opening At market (%.4f, %.4f => %.4f)", price, signalPrice, vspread);
+      ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, 0, clrPink);
+   } else if (signalPrice > price) { // sell limit
+      PrintFormat("[Av.goShort] opening Limit at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+                         stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrPink);
+   } else { // sell stop
+      PrintFormat("[Av.goShort] opening Stop at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+                         stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
+   }
+   
+   if (ticket == -1) {
+      int check = GetLastError();
+      PrintFormat("[Av.goShort] ERROR opening order: %d / %s", check, ErrorDescription(check));
+   } else if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
+      m_shortPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
+                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
+      m_shortPositions.setLastBar(Bars);
    }
 }
 
@@ -228,24 +294,15 @@ void Trader::sellLongs() {
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
          PrintFormat("[AV.sellLongs.%d/%d] Closing order %d (buy price %.4f -> sell price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
+      } else {
+         int check = GetLastError();
+         PrintFormat("[Av.sellLongs.%d/%d] ERROR closing order: %d", i, oCount, check);
       }
    }
    if (oCount > 0) {
       PrintFormat("[AV.sellLongs] Closed %d orders (size %.2f) / (long MP %.4f -> sell at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
       m_longPositions.clear();
-   }
-}
-
-void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
-   if (m_shortPositions.lastBar() == Bars || m_shortPositions.count() >= MAX_POSITIONS) return; // already traded?
-   // short trades
-   double price = Bid;
-   int ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, clrPink);
-   if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-      m_shortPositions.add(new Position(ticket, OrderOpenTime(), OrderLots(),
-                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
-      m_shortPositions.setLastBar(Bars);
    }
 }
 
@@ -258,6 +315,9 @@ void Trader::coverShorts() {
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
          PrintFormat("[AV.coverShorts.%d/%d] Closing order %d (sell price %.4f -> buy price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
+      } else {
+         int check = GetLastError();
+         PrintFormat("[Av.coverShorts.%d/%d] ERROR closing order: %d", i, oCount, check);
       }
    }
    if (oCount > 0) {

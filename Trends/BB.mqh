@@ -21,9 +21,9 @@ class BBTrend : public Trend {
       double m_bbTop;
       bool __debug;
       
-      BBTrend(void): m_timeframe(0), m_stdDev(2.0), __debug(false) {};
-      BBTrend(int timeframe): m_timeframe(timeframe), m_stdDev(2.0), __debug(false) {};
-      BBTrend(int timeframe, double stdDeviation): m_timeframe(timeframe), m_stdDev(stdDeviation), __debug(false) {};
+      BBTrend(void): m_timeframe(0), m_stdDev(2.0), __debug(false) { m_trendType = "BB"; };
+      BBTrend(int timeframe): m_timeframe(timeframe), m_stdDev(2.0), __debug(false) { m_trendType = "BB"; };
+      BBTrend(int timeframe, double stdDeviation): m_timeframe(timeframe), m_stdDev(stdDeviation), __debug(false) { m_trendType = "BB"; };
       
       void setDebug(bool debug) { __debug = debug; };
       void calculate(int period=20);

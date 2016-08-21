@@ -12,7 +12,7 @@
 #ifndef __TRENDS_ATR__
 #define __TRENDS_ATR__
 
-class ATRdelta {
+class ATRdelta { //: public Trend {
    public:
       int m_timeframe;
       double m_atr1;
@@ -21,6 +21,7 @@ class ATRdelta {
       double m_atr2_i;
       
       ATRdelta(int timeframe, int Period1, int Period2) {
+         //m_trendType = "ATR"; 
          m_timeframe = timeframe;
          m_atr1 = iATR(Symbol(), m_timeframe, Period1, 0);
          m_atr1_i = iATR(Symbol(), m_timeframe, Period1, 1);

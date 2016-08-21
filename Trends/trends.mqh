@@ -27,6 +27,7 @@
 class Trend {
    protected:
       int m_trend;
+      string m_trendType;
       
    public:
       Trend() {};

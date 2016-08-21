@@ -59,6 +59,7 @@ Trader *gTrader; // Orders maker
 SignalTimeFrames gSignalTF;
 
 int gCountMinutes;
+int gCountTicks;
 
 int OnInit() {
    gSignalTF.current = Period();
@@ -90,7 +91,8 @@ int OnInit() {
    gTrader.loadCurrentOrders();
    
    gCountMinutes = 0;
-   EventSetTimer(1 * 60); // Every 1 minute, call onTimer
+   gCountTicks = 0;
+   EventSetTimer(60); // Every 1 minute, call onTimer
  
    return INIT_SUCCEEDED;
 }
@@ -135,6 +137,15 @@ void OnTick() {
    AlphaVisionSignals *signals = gTrader.getSignals();
 
    signals.calculateOn(gSignalTF.fast);
+   // strategy tester does not call onTimer
+   gCountTicks++;
+   if (gCountTicks % 50 == 0)
+      signals.calculateOn(gSignalTF.current);
+   else if (gCountTicks >= 300) {
+      gCountTicks = 0;
+      signals.calculateOn(gSignalTF.major);
+   }
+   
    gTrader.tradeOnTrends();
 }
 

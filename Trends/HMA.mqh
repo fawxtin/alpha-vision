@@ -25,7 +25,9 @@ class HMATrend : public Trend {
    public:
       // HMATrend(const Trend &ref): m_trend(ref.m_trend), m_value1(ref.m_value1), m_value1_i(ref.m_value1_i),
       //    m_value2(ref.m_value2), m_value2_i(ref.m_value2_i) { };
-      HMATrend(int timeframe, int period1, int period2): m_timeframe(timeframe), m_period1(period1), m_period2(period2) { };
+      HMATrend(int timeframe, int period1, int period2): m_timeframe(timeframe), m_period1(period1), m_period2(period2) {
+         m_trendType = "HMA";
+      };
       void setDebug(bool debug) { __debug = debug; }
       virtual void calculate();
       
