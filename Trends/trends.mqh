@@ -20,6 +20,7 @@
 #define TREND_NEGATIVE_BREAKOUT      -4
 #define TREND_NEUTRAL                 0
 #define TREND_STABLE                  0
+#define TREND_EMPTY                  -111
 
 
 // TODO: create a class that keeps trend values

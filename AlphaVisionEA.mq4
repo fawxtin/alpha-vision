@@ -139,7 +139,7 @@ void OnTick() {
    signals.calculateOn(gSignalTF.fast);
    // strategy tester does not call onTimer
    gCountTicks++;
-   if (gCountTicks % 50 == 0)
+   if (gCountTicks % 35 == 0)
       signals.calculateOn(gSignalTF.current);
    else if (gCountTicks >= 300) {
       gCountTicks = 0;

@@ -27,12 +27,13 @@ double normalizePrice(double val, int s=4) {
 
 class Trader {
    protected:
+      int m_htTrend;
       Positions *m_longPositions;
       Positions *m_shortPositions;
       AlphaVisionSignals *m_signals;
 
    public:
-      Trader(Positions *longPs, Positions *shortPs, AlphaVisionSignals *signals) {
+      Trader(Positions *longPs, Positions *shortPs, AlphaVisionSignals *signals): m_htTrend(TREND_EMPTY) {
          m_longPositions = longPs;
          m_shortPositions = shortPs;
          m_signals = signals;
@@ -45,6 +46,13 @@ class Trader {
       }
       
       AlphaVisionSignals *getSignals() { return m_signals; }
+      
+      void setHtTrend(int trend) {
+         if (m_htTrend != trend) {
+            m_htTrend = trend;
+            Alert(StringFormat("[Trader] Major timeframe trend changed to: %d", m_htTrend));
+         }
+      }
       
       void loadCurrentOrders(bool noMagicMA=false) {
          m_longPositions.loadCurrentOrders(noMagicMA);
@@ -88,19 +96,22 @@ void Trader::tradeOnTrends() {
     *
     */
    SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avMt = m_signals.getAlphaVisionOn(stf.major);
-   HMATrend *mtMajor = avMt.m_hmaMajor;
-   HMATrend *mtMinor = avMt.m_hmaMinor;
+   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
+   HMATrend *ctMajor = avCt.m_hmaMajor;
+   HMATrend *ctMinor = avCt.m_hmaMinor;
 
-   string mtMajorSimplified = mtMajor.simplify();
-   string mtMinorSimplified = mtMinor.simplify();
+   string ctMajorSimplified = ctMajor.simplify();
+   string ctMinorSimplified = ctMinor.simplify();
    
-   if (mtMajorSimplified != mtMinorSimplified) { // Neutral trend
+   if (ctMajorSimplified != ctMinorSimplified) { // Neutral trend
+      setHtTrend(TREND_NEUTRAL);
       tradeNeutralTrend();
-   } else if (mtMajorSimplified == "POSITIVE") { // Positive trend
+   } else if (ctMajorSimplified == "POSITIVE") { // Positive trend
+      setHtTrend(TREND_POSITIVE);
       tradePositiveTrend();
       //tradeNeutralTrend();
-   } else if (mtMajorSimplified == "NEGATIVE") { // Negative trend
+   } else if (ctMajorSimplified == "NEGATIVE") { // Negative trend
+      setHtTrend(TREND_NEGATIVE);
       tradeNegativeTrend();
       //tradeNeutralTrend();
    }
@@ -116,11 +127,19 @@ void Trader::tradeNeutralTrend() {
     */
    
    SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
+   HMATrend *ctMinor = avCt.m_hmaMinor;
+   AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
    BBTrend *bb = avCt.m_bb;
+
+   int superMinorTrend = ctMinor.getTrend();
+   if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
+      sellLongs(); return; // close longs
+   } else if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
+      coverShorts(); return;
+   }
 
    if (major.simplify() != minor.simplify()) { // undecision
       // go with minor trend scalps
@@ -229,19 +248,19 @@ void Trader::goLong(double signalPrice, double priceTarget=0, double stopLoss=0,
    if (m_longPositions.lastBar() == Bars || m_longPositions.count() >= MAX_POSITIONS) return; // already traded / full
    //OrderSend
    int vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
-   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / 100;
+   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / MathPow(10, vdigits);
    int ticket;
    double price = Ask;
    if (MathAbs(price - signalPrice) < vspread) { // buy market
-      PrintFormat("[Av.goLong] opening At market (%.4f, %.4f => %.4f)", price, signalPrice, vspread);
+      PrintFormat("[Av.goLong] opening At market (%.4f, %.4f => %.4f (%.4f))", price, signalPrice, vspread, MathAbs(signalPrice - price));
       ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, 0, clrAliceBlue);
    } else if (signalPrice < price) { // buy limit
-      PrintFormat("[Av.goLong] opening Limit at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
-      ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+      PrintFormat("[Av.goLong] opening Limit at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    } else {// buy stop
-      PrintFormat("[Av.goLong] opening Stop at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
-      ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+      PrintFormat("[Av.goLong] opening Stop at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    }
    
@@ -259,19 +278,19 @@ void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0
    if (m_shortPositions.lastBar() == Bars || m_shortPositions.count() >= MAX_POSITIONS) return; // already traded?
    // short trades
    int vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
-   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / 100;
+   double vspread = MarketInfo(Symbol(), MODE_SPREAD) / MathPow(10, vdigits);
    int ticket;
    double price = Bid;
-   if (MathAbs(price - signalPrice) < vspread) { // sell market
-      PrintFormat("[Av.goShort] opening At market (%.4f, %.4f => %.4f)", price, signalPrice, vspread);
-      ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, 0, clrPink);
+   if (MathAbs(signalPrice - price) < vspread) { // sell market
+      PrintFormat("[Av.goShort] opening At market (%.4f, %.4f => %.4f (%.4f))", price, signalPrice, vspread, MathAbs(signalPrice - price));
+      ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, 0, 0, reason, MAGICMA, 0, clrPink);
    } else if (signalPrice > price) { // sell limit
-      PrintFormat("[Av.goShort] opening Limit at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
-      ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+      PrintFormat("[Av.goShort] opening Limit at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrPink);
    } else { // sell stop
-      PrintFormat("[Av.goShort] opening Stop at %f (%.4f)", normalizePrice(signalPrice, vdigits), price);
-      ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, normalizePrice(signalPrice, vdigits), 3,
+      PrintFormat("[Av.goShort] opening Stop at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    }
    
