@@ -40,21 +40,31 @@ class AlphaVision : public HashValue {
       }
 };
 
+struct SignalTimeFrames {
+   int super;
+   int major;
+   int current;
+   int fast;
+};
+
 class AlphaVisionSignals {
    protected:
       string getKey(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
       Hash *m_hash;
+      SignalTimeFrames m_timeframes;
       
    public:
       AlphaVisionSignals() { m_hash = new Hash(193, true); }
+      AlphaVisionSignals(SignalTimeFrames &tfs) { m_hash = new Hash(193, true); m_timeframes = tfs; }
       void ~AlphaVisionSignals() { delete m_hash; }
       
+      SignalTimeFrames getTimeFrames() { return m_timeframes; }
       // TODO: from different passed config structures (HMA, ATR, BB, ...), could get different stuff
       bool initOn(int timeframe, int period1, int period2, int period3) {
          string tfKey = getKey(timeframe);
          if (! m_hash.hContainsKey(tfKey)) {
-            m_hash.hPut(tfKey, new AlphaVision(new HMATrend(timeframe, iPeriod2, iPeriod3),
-                                               new HMATrend(timeframe, iPeriod1, iPeriod2)));
+            m_hash.hPut(tfKey, new AlphaVision(new HMATrend(timeframe, period2, period3),
+                                               new HMATrend(timeframe, period1, period2)));
             return true;
          }
          else return false;

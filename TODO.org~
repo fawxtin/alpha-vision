@@ -1,0 +1,21 @@
+
+
+* Alpha Vision
+
+** Quants Algorithms
+*** Learn through books
+**** Algorithmic Trading
+**** Quantitative Trading and Money Management
+**** Quantitative Trading Strategies
+
+** MQL libraries
+
+*** Deal with Positions
+    Develop an OO schema to deal with positions Risk&Reward
+
+*** Deal with Trends
+    Develop functions that calculates trends
+
+*** DONE Learn to do backtesting
+
+** 

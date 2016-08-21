@@ -1,0 +1,91 @@
+
+
+* Alpha Vision
+
+** Learning Techniques
+*** Algorithmic Trading
+*** Quantitative Trading and Money Management
+*** Quantitative Trading Strategies
+
+** Trends
+   Calculate trends based on config input
+
+*** TODO provide a trend input structure / for each trend type
+*** BB
+*** HMA
+*** ATR
+*** Stochastic
+*** MACD
+
+** Positions/Trader
+   Deal with positions and execute entry/exit points.
+
+*** TODO Execute Positions
+
+*** TODO Calculate best Entry & Exit / Brain
+    Use signals to provide a good entry&exit point.
+    Thats the AV brain, providing trades on signals read
+    through the AVSignals.
+
+    The algorithm uses:
+      - SuperTrend (weekly/monthly);
+      - MajorTrend (4H/Daily);
+      - CurrentTrend (1H);
+      - FastTrend (5Min/15min);
+
+    When superior Trend is in an Overbought / Oversold conditions, the
+    trader doesnt execute right on time, wait for an opportunity to get
+    in, or trade reversal (if its major or super trend).
+
+    Hipotesis:
+    
+    Trend is set through median crosses, from 20 to 50, and 50 to 200. Maybe
+    under different circunstances we can use different slices, but thats not
+    the first case.
+
+    Entry & Exit points will be found using BB. When trend is positive,
+    we buy in any point of BB negative area. The best case would be buying on
+    the BB bottom support line, or bellow it, when its oversold. We never
+    buy on top of BB. The price might not even pullback, but we wait till the
+    price reachs the middle line for the next leg up.
+    Exit/target point is set on top of BB, or when the trend changes.
+
+    Working with multiple timeframe trends:
+
+    The SuperTrend rules most of the trades, setting lower target points for
+    anti trend calls (setting cautious tag).
+
+    Most of the greater positions will be set through the 1H timeframe, When:
+      - MT => Positive
+      - CT => Positive
+      - FT => Any
+	Look for buy positions in middle BB at CT
+
+    When:
+      - MT => Neutral
+      - CT => Positive
+      - FT => Any
+	MT is neutral, Look for buy positions in bottom BB at CT, 
+	and sell at top BB
+
+    When:
+      - MT => Neutral
+      - CT => Neutral
+      - FT => Any
+	Scalp! Set fast targets through hourly ATR and enjoy rides.
+
+    When:
+      - MT => Positive
+      - CT => Neutral
+      - FT => Any
+	Look for buy positions in bottom BB at CT
+
+
+
+
+*** Risk & Reward Optimization
+
+** Signals / Heart
+   Calculate and use Trends to capture signals.
+   Thats the AV heart, providing info on whether the market
+   shall be going.
