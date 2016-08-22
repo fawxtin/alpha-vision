@@ -26,7 +26,7 @@ input int iPeriod2 = 50;
 input int iPeriod3 = 200;
 // TODO: input higher time interval than current
 input bool iDebug = True;
-input int iFastTimeFrame = PERIOD_M5;
+input int iFastTimeFrame = PERIOD_M15;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
@@ -129,7 +129,7 @@ void OnTick() {
     * Calculate current trend and support/resistence levels
     */
    
-   if (Bars < 100) {
+   if (Bars < 220) {
       Print("Too few bars.");
       return;
    }

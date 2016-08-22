@@ -61,14 +61,14 @@ void Trader::goLong(double signalPrice, double priceTarget=0, double stopLoss=0,
    int ticket;
    double price = Ask;
    if (MathAbs(price - signalPrice) < vspread) { // buy market
-      PrintFormat("[Trader.goLong] opening At market (%.4f, %.4f => %.4f (%.4f))", price, signalPrice, vspread, MathAbs(signalPrice - price));
+      PrintFormat("[Trader.goLong/%s] opening At market (%.4f, %.4f => %.4f (%.4f))", reason, price, signalPrice, vspread, MathAbs(signalPrice - price));
       ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, price, 3, stopLoss, priceTarget, reason, MAGICMA, 0, clrAliceBlue);
    } else if (signalPrice < price) { // buy limit
-      PrintFormat("[Trader.goLong] opening Limit at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      PrintFormat("[Trader.goLong/%s] opening Limit at %f (%.4f)", reason, NormalizeDouble(signalPrice, vdigits), price);
       ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    } else {// buy stop
-      PrintFormat("[Trader.goLong] opening Stop at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      PrintFormat("[Trader.goLong/%s] opening Stop at %f (%.4f)", reason, NormalizeDouble(signalPrice, vdigits), price);
       ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    }
@@ -91,14 +91,14 @@ void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0
    int ticket;
    double price = Bid;
    if (MathAbs(signalPrice - price) < vspread) { // sell market
-      PrintFormat("[Trader.goShort] opening At market (%.4f, %.4f => %.4f (%.4f))", price, signalPrice, vspread, MathAbs(signalPrice - price));
+      PrintFormat("[Trader.goShort/%s] opening At market (%.4f, %.4f => %.4f (%.4f))", reason, price, signalPrice, vspread, MathAbs(signalPrice - price));
       ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, price, 3, 0, 0, reason, MAGICMA, 0, clrPink);
    } else if (signalPrice > price) { // sell limit
-      PrintFormat("[Trader.goShort] opening Limit at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      PrintFormat("[Trader.goShort/%s] opening Limit at %f (%.4f)", reason, NormalizeDouble(signalPrice, vdigits), price);
       ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrPink);
    } else { // sell stop
-      PrintFormat("[Trader.goShort] opening Stop at %f (%.4f)", NormalizeDouble(signalPrice, vdigits), price);
+      PrintFormat("[Trader.goShort/%s opening Stop at %f (%.4f)", reason, NormalizeDouble(signalPrice, vdigits), price);
       ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, NormalizeDouble(signalPrice, vdigits), 3,
                          stopLoss, priceTarget, reason, MAGICMA, EXPIRE_NEVER, clrAliceBlue);
    }

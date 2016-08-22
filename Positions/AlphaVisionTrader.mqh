@@ -107,16 +107,22 @@ void AlphaVisionTrader::tradeNeutralTrend() {
    BBTrend *bbFt = avFt.m_bb;
 
    if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
-      goLong(hmaFtMj.getMAPeriod1(), bbFt.m_bbTop, 0, "Neutral-hma");
+      //goLong(Ask, bbFt.m_bbTop, 0, "Neutral-market");
+      goLong(hmaFtMj.getMAPeriod2(), bbFt.m_bbTop, 0, "Neutral-hmaMj");
       goBBLong(bbFt, "TNeutral-bb");
    } else if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
-      goLong(hmaFtMn.getMAPeriod1(), bbFt.m_bbTop, 0, "Neutral-hma");
+      //goLong(Ask, bbFt.m_bbTop, 0, "Neutral-market");
+      goLong(hmaFtMn.getMAPeriod2(), bbFt.m_bbTop, 0, "Neutral-hmaMn");
       goBBLong(bbFt, "TNeutral-bb");
    } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
-      goShort(hmaFtMj.getMAPeriod1(), bbFt.m_bbBottom, 0, "Neutral-hma");
+      //PrintFormat("[AVT.neutral.short.Mj] hma %.4f / bb %.4f", hmaFtMj.getMAPeriod1(), bbFt.m_bbTop);
+      //goShort(Bid, bbFt.m_bbBottom, 0, "Neutral-market");
+      goShort(hmaFtMj.getMAPeriod2(), bbFt.m_bbBottom, 0, "Neutral-hmaMj");
       goBBShort(bbFt, "TNeutral-bb");
    } else if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
-      goShort(hmaFtMn.getMAPeriod1(), bbFt.m_bbBottom, 0, "Neutral-hma");
+      //PrintFormat("[AVT.neutral.short.Mn] hma %.4f / bb %.4f", hmaFtMn.getMAPeriod1(), bbFt.m_bbTop);
+      //goShort(Bid, bbFt.m_bbBottom, 0, "Neutral-market");
+      goShort(hmaFtMn.getMAPeriod2(), bbFt.m_bbBottom, 0, "Neutral-hmaMn");
       goBBShort(bbFt, "TNeutral-bb");
    }
 }
@@ -139,10 +145,10 @@ void AlphaVisionTrader::tradePositiveTrend() {
    }
    
    if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goLong(hmaFtMn.getMAPeriod1(), bbCt.m_bbTop, 0, "TPositive-hma");
+      goLong(hmaFtMn.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMn");
       goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
    } else if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goLong(hmaFtMj.getMAPeriod1(), bbCt.m_bbTop, 0, "TPositive-hma");
+      goLong(hmaFtMj.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMj");
       goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
    }
 }
@@ -165,10 +171,10 @@ void AlphaVisionTrader::tradeNegativeTrend() {
    }
 
    if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goShort(hmaFtMn.getMAPeriod1(), bbCt.m_bbBottom, 0, "TPositive-hma");
+      goShort(hmaFtMn.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMn");
       goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
    } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goShort(hmaFtMj.getMAPeriod1(), bbCt.m_bbBottom, 0, "TPositive-hma");
+      goShort(hmaFtMj.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMj");
       goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
    }
 }
