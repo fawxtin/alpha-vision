@@ -88,7 +88,7 @@ int OnInit() {
 
 
    // loading current positions
-   gTrader = new Trader(new Positions("LONG"), new Positions("SHORT"), avSignals);
+   gTrader = new AlphaVisionTrader(new Positions("LONG"), new Positions("SHORT"), avSignals);
    gTrader.loadCurrentOrders();
    
    gCountMinutes = 0;

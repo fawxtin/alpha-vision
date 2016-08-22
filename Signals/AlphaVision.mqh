@@ -15,6 +15,9 @@
 #include <Trends\BB.mqh>
 #include <Trends\Stochastic.mqh>
 
+#include <Signals\Signals.mqh>
+
+
 #ifndef __SIGNALS_ALPHAVISION__
 #define __SIGNALS_ALPHAVISION__ 1
 
@@ -45,14 +48,7 @@ class AlphaVision : public HashValue {
       }
 };
 
-struct SignalTimeFrames {
-   int super;
-   int major;
-   int current;
-   int fast;
-};
-
-class AlphaVisionSignals {
+class AlphaVisionSignals : public Signals {
    protected:
       string getKey(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
       Hash *m_hash;
@@ -81,6 +77,7 @@ class AlphaVisionSignals {
          if (m_hash.hContainsKey(tfKey)) {
             AlphaVision *av = m_hash.hGet(tfKey);
             av.calculate();
+            // TODO: set signals
             return true;
          } else
             return false;

@@ -13,7 +13,6 @@
 
 class AlphaVisionTrader : public Trader {
    protected:
-      int m_htTrend;
       int m_bbBarShort;
       int m_bbBarLong;
       AlphaVisionSignals *m_signals;
@@ -21,7 +20,6 @@ class AlphaVisionTrader : public Trader {
    public:
       AlphaVisionTrader(Positions *longPs, Positions *shortPs, AlphaVisionSignals *signals): Trader(longPs, shortPs) {
          m_signals = signals;
-         m_htTrend = TREND_EMPTY;
          m_bbBarLong = 0;
          m_bbBarShort = 0;         
       }
@@ -30,21 +28,13 @@ class AlphaVisionTrader : public Trader {
       
       AlphaVisionSignals *getSignals() { return m_signals; }
       
-      bool setHtTrend(int trend) {
-         if (m_htTrend != trend) {
-            m_htTrend = trend;
-            Alert(StringFormat("[Trader] Major timeframe trend changed to: %d", m_htTrend));
-            return true;
-         } else return false;
-      }
-      
       // trader executing signals
       void tradeOnTrends();
-      void tradeNeutralTrend(bool);
-      void tradeNegativeTrend(bool);
-      void tradePositiveTrend(bool);
-      void goBBLong(string reason, bool useBar=false);
-      void goBBShort(string reason, bool useBar=false);
+      void tradeNeutralTrend();
+      void tradeNegativeTrend();
+      void tradePositiveTrend();
+      void goBBLong(BBTrend *bb, string reason, bool useBar=false, double target=0);
+      void goBBShort(BBTrend *bb, string reason, bool useBar=false, double target=0);
 
 };
 
@@ -73,29 +63,35 @@ void AlphaVisionTrader::tradeOnTrends() {
     */
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   HMATrend *ctMajor = avCt.m_hmaMajor;
-   HMATrend *ctMinor = avCt.m_hmaMinor;
-
-   string ctMajorSimplified = ctMajor.simplify();
-   string ctMinorSimplified = ctMinor.simplify();
-   bool changed = false;
-   if (ctMajorSimplified != ctMinorSimplified) { // Neutral trend
-      changed = setHtTrend(TREND_NEUTRAL);
-      tradeNeutralTrend(changed);
-   } else if (ctMajorSimplified == "POSITIVE") { // Positive trend
-      changed = setHtTrend(TREND_POSITIVE);
-      if (changed) closeShorts();
-      tradePositiveTrend(changed);
-      //tradeNeutralTrend();
-   } else if (ctMajorSimplified == "NEGATIVE") { // Negative trend
-      changed = setHtTrend(TREND_NEGATIVE);
-      if (changed) closeLongs();
-      tradeNegativeTrend(changed);
-      //tradeNeutralTrend();
+   HMATrend *hmaCtMj = avCt.m_hmaMajor;
+   HMATrend *hmaCtMn = avCt.m_hmaMinor;
+   
+   SignalChange signalCt;
+   string simplifiedMj = hmaCtMj.simplify();
+   string simplifiedMn = hmaCtMn.simplify();
+   if (simplifiedMj != simplifiedMn) { // Neutral trend
+      m_signals.setTrendCt(TREND_NEUTRAL);
+      tradeNeutralTrend();
+   } else if (simplifiedMj == "POSITIVE") { // Positive trend
+      m_signals.setTrendCt(TREND_POSITIVE);
+      signalCt = m_signals.getTrendCt();
+      if (signalCt.changed) {
+         Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
+         closeShorts();
+      }
+      tradePositiveTrend();
+   } else if (simplifiedMj == "NEGATIVE") { // Negative trend
+      m_signals.setTrendCt(TREND_NEGATIVE);
+      signalCt = m_signals.getTrendCt();
+      if (signalCt.changed) {
+         Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
+         closeLongs();
+      }
+      tradeNegativeTrend();
    }
 }
 
-void AlphaVisionTrader::tradeNeutralTrend(bool changed) {
+void AlphaVisionTrader::tradeNeutralTrend() {
    /* neutral territory, scalp setup
     * 1) major != minor
     *    open and close positions on crossing
@@ -105,126 +101,103 @@ void AlphaVisionTrader::tradeNeutralTrend(bool changed) {
     */
    
    SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   HMATrend *ctMinor = avCt.m_hmaMinor;
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
-   HMATrend *major = avFt.m_hmaMajor;
-   HMATrend *minor = avFt.m_hmaMinor;
+   HMATrend *hmaFtMj = avFt.m_hmaMajor;
+   HMATrend *hmaFtMn = avFt.m_hmaMinor;
+   BBTrend *bbFt = avFt.m_bb;
 
-   int superMinorTrend = ctMinor.getTrend();
-   if (changed) PrintFormat("[tradeNeutralTrend] above trend changed: %d", superMinorTrend);
-   //if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
-   //   closeLongs("Neutral Trend"); return; // close longs
-   //} else if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
-   //   closeShorts("Neutral Trend"); return; // close shorts
-   //}
-
-   if (major.simplify() != minor.simplify()) { // undecision
-      // go with minor trend scalps
-      switch (minor.getTrend()) {
-         case TREND_POSITIVE_FROM_NEGATIVE: // go long
-            //coverShorts();
-            goBBLong("TNeutral-neutral");
-            break;
-         case TREND_NEGATIVE_FROM_POSITIVE: // go short
-            //sellLongs();
-            goBBShort("TNeutral-neutral");
-            break;
-         default:
-            break;
-      }
-   } else if (minor.simplify() == "POSITIVE") { // trending positive - trade when crossing
-      if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-         //closeShorts();
-         goBBLong("TNeutral-positive");
-      } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-         //closeShorts();
-         goBBLong("TNeutral-positive");
-      }
-   } else { // trending negative / trade when crossing
-      if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-         //closeLongs();
-         goBBShort("TNeutral-negative");
-      } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-         //closeLongs();
-         goBBShort("TNeutral-negative");
-      }
+   if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
+      goLong(hmaFtMj.getMAPeriod1(), bbFt.m_bbTop, 0, "Neutral-hma");
+      goBBLong(bbFt, "TNeutral-bb");
+   } else if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
+      goLong(hmaFtMn.getMAPeriod1(), bbFt.m_bbTop, 0, "Neutral-hma");
+      goBBLong(bbFt, "TNeutral-bb");
+   } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
+      goShort(hmaFtMj.getMAPeriod1(), bbFt.m_bbBottom, 0, "Neutral-hma");
+      goBBShort(bbFt, "TNeutral-bb");
+   } else if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
+      goShort(hmaFtMn.getMAPeriod1(), bbFt.m_bbBottom, 0, "Neutral-hma");
+      goBBShort(bbFt, "TNeutral-bb");
    }
 }
 
-void AlphaVisionTrader::tradePositiveTrend(bool changed) {
+void AlphaVisionTrader::tradePositiveTrend() {
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   HMATrend *ctMinor = avCt.m_hmaMinor;
+   HMATrend *hmaCtMn = avCt.m_hmaMinor;
+   BBTrend *bbCt = avCt.m_bb;
+  
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
-   HMATrend *major = avFt.m_hmaMajor;
-   HMATrend *minor = avFt.m_hmaMinor;
+   HMATrend *hmaFtMj = avFt.m_hmaMajor;
+   HMATrend *hmaFtMn = avFt.m_hmaMinor;
+   BBTrend *bbFt = avFt.m_bb;
 
-   int superMinorTrend = ctMinor.getTrend();
-   if (changed) PrintFormat("[tradePositiveTrend] above trend changed: %d", superMinorTrend);
-   if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
+   if (hmaCtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
       closeLongs("Positive Trend"); // close longs
-      goBBShort("TPositive-Reversal", true);
+      goBBShort(bbCt, "TPositive-Reversal", true);
       return;
    }
    
-   if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goBBLong("TPositive-FT-minor");
-   } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goBBLong("TPositive-FT-major");
+   if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+      goLong(hmaFtMn.getMAPeriod1(), bbCt.m_bbTop, 0, "TPositive-hma");
+      goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
+   } else if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
+      goLong(hmaFtMj.getMAPeriod1(), bbCt.m_bbTop, 0, "TPositive-hma");
+      goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
    }
 }
 
-void AlphaVisionTrader::tradeNegativeTrend(bool changed) {
+void AlphaVisionTrader::tradeNegativeTrend() {
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   HMATrend *ctMinor = avCt.m_hmaMinor;
+   HMATrend *hmaCtMn = avCt.m_hmaMinor;
+   BBTrend *bbCt = avCt.m_bb;
+  
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
-   HMATrend *major = avFt.m_hmaMajor;
-   HMATrend *minor = avFt.m_hmaMinor;
+   HMATrend *hmaFtMj = avFt.m_hmaMajor;
+   HMATrend *hmaFtMn = avFt.m_hmaMinor;
+   BBTrend *bbFt = avFt.m_bb;
 
-   int superMinorTrend = ctMinor.getTrend();
-   if (changed) PrintFormat("[tradeNegativeTrend] above trend changed: %d", superMinorTrend);
-   if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
+   if (hmaCtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
       closeShorts("Negative Trend"); // cover shorts
-      goBBLong("TNegative-Reversal", true);
+      goBBLong(bbCt, "TNegative-Reversal", true);
       return;
    }
 
-   if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goBBShort("TNegative-FT-minor");
-   } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goBBShort("TNegative-FT-major");
+   if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+      goShort(hmaFtMn.getMAPeriod1(), bbCt.m_bbBottom, 0, "TPositive-hma");
+      goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
+   } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
+      goShort(hmaFtMj.getMAPeriod1(), bbCt.m_bbBottom, 0, "TPositive-hma");
+      goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
    }
 }
 
+double getTarget(double target, double nDefault) {
+   if (target == 0) return nDefault;
+   else return target;
+}
 
 //// Executing Orders
-void AlphaVisionTrader::goBBLong(string reason, bool useBar=false) {
+void AlphaVisionTrader::goBBLong(BBTrend *bb, string reason, bool useBar=false, double target=0) {
    if (useBar) {
       if (m_bbBarLong == Bars) return;
       else m_bbBarLong = Bars;
    }
-   SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   BBTrend *bb = avCt.m_bb;
 
    if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-      goLong(bb.m_bbMiddle, bb.m_bbTop, 0, reason);
-   goLong(bb.m_bbBottom, bb.m_bbTop, 0, reason);
+      goLong(bb.m_bbMiddle, getTarget(target, bb.m_bbTop), 0, reason);
+   goLong(bb.m_bbBottom, getTarget(target, bb.m_bbTop), 0, reason);
 }
 
-void AlphaVisionTrader::goBBShort(string reason, bool useBar=false) {
+void AlphaVisionTrader::goBBShort(BBTrend *bb, string reason, bool useBar=false, double target=0) {
    if (useBar) {
       if (m_bbBarShort == Bars) return;
       else m_bbBarShort = Bars;
    }
-   SignalTimeFrames stf = m_signals.getTimeFrames();
-   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
-   BBTrend *bb = avCt.m_bb;
 
    if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-      goShort(bb.m_bbMiddle, bb.m_bbBottom, 0, reason);
-   goShort(bb.m_bbTop, bb.m_bbBottom, 0, reason);
+      goShort(bb.m_bbMiddle, getTarget(target, bb.m_bbBottom), 0, reason);
+   goShort(bb.m_bbTop, getTarget(target, bb.m_bbBottom), 0, reason);
 }
 
