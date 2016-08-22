@@ -22,6 +22,7 @@
 
 *** TODO Update existing positions
 *** TODO Find out where its performing good/bad
+*** DONE Bug trying to close pending orders?
 
 *** TODO Execute Positions
 
