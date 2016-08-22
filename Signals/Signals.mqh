@@ -30,13 +30,15 @@ struct SignalChange {
 
 class Signals {
    public:
-      //SignalChange m_trendMj;
+      SignalChange m_trendMj;
       //SignalChange m_trendFt;
       SignalChange m_trendCt;
       //SignalChange m_trendSp;
       
       Signals() {
-         //m_trendMj = TREND_EMPTY;
+         m_trendMj.last = TREND_EMPTY;
+         m_trendMj.current = TREND_EMPTY;
+         m_trendMj.changed = false;
          //m_trendFt = TREND_EMPTY;
          m_trendCt.last = TREND_EMPTY;
          m_trendCt.current = TREND_EMPTY;
@@ -44,16 +46,15 @@ class Signals {
          //m_trendSp = TREND_EMPTY;
       }
       
-      //SignalChange getTrendMj() { return m_trendMj; }
+      SignalChange getTrendMj() { return m_trendMj; }
       
-      //void setTrendMj(int trend) {
-      //   if (m_trendMj.current != trend) {
-      //      m_trendMj.last = m_trendMj.current;
-      //      m_trendMj.current = trend;
-      //      m_trendMj.changed = true
-      //      Alert(StringFormat("[Trader] Major timeframe trend changed to: %d", trend));
-      //   } else if (m_trendMj.changed) m_trendMj.changed = false;
-      //}
+      void setTrendMj(int trend) {
+         if (m_trendMj.current != trend) {
+            m_trendMj.last = m_trendMj.current;
+            m_trendMj.current = trend;
+            m_trendMj.changed = true;
+         } else if (m_trendMj.changed) m_trendMj.changed = false;
+      }
 
       //SignalChange getTrendFt() { return m_trendFt; }
       
