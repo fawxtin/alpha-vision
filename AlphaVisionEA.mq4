@@ -12,7 +12,8 @@
 #include <Trends\HMA.mqh>
 
 #include <Positions\Positions.mqh>
-#include <Positions\Trader.mqh>
+#include <Positions\AlphaVisionTrader.mqh>
+
 #include <Signals\AlphaVision.mqh>
 
 
@@ -55,7 +56,7 @@ input int iSuperTimeFrame = PERIOD_W1;
 ////
 //// GLOBALS
 ////
-Trader *gTrader; // Orders maker
+AlphaVisionTrader *gTrader; // Orders maker
 SignalTimeFrames gSignalTF;
 
 int gCountMinutes;
