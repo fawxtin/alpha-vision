@@ -105,7 +105,6 @@ void OnDeinit(const int reason) {
    delete gTrader;
 
    // TODO: add results calculi
-      
    Print("Bye Bye!");
 }
 

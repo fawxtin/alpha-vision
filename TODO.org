@@ -20,6 +20,9 @@
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
+*** TODO Update existing positions
+*** TODO Find out where its performing good/bad
+
 *** TODO Execute Positions
 
 *** TODO Calculate best Entry & Exit / Brain

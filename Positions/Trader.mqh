@@ -28,6 +28,8 @@ double normalizePrice(double val, int s=4) {
 class Trader {
    protected:
       int m_htTrend;
+      int m_bbBarShort;
+      int m_bbBarLong;
       Positions *m_longPositions;
       Positions *m_shortPositions;
       AlphaVisionSignals *m_signals;
@@ -37,6 +39,8 @@ class Trader {
          m_longPositions = longPs;
          m_shortPositions = shortPs;
          m_signals = signals;
+         m_bbBarLong = 0;
+         m_bbBarShort = 0;
       }
       
       void ~Trader() {
@@ -47,11 +51,12 @@ class Trader {
       
       AlphaVisionSignals *getSignals() { return m_signals; }
       
-      void setHtTrend(int trend) {
+      bool setHtTrend(int trend) {
          if (m_htTrend != trend) {
             m_htTrend = trend;
             Alert(StringFormat("[Trader] Major timeframe trend changed to: %d", m_htTrend));
-         }
+            return true;
+         } else return false;
       }
       
       void loadCurrentOrders(bool noMagicMA=false) {
@@ -61,15 +66,17 @@ class Trader {
       
       // trader executing signals
       void tradeOnTrends();
-      void tradeNeutralTrend();
-      void tradeNegativeTrend();
-      void tradePositiveTrend();
+      void tradeNeutralTrend(bool);
+      void tradeNegativeTrend(bool);
+      void tradePositiveTrend(bool);
       
       // trader executing orders
+      void goBBLong(string reason, bool useBar=false);
+      void goBBShort(string reason, bool useBar=false);
       void goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
       void goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
-      void sellLongs();
-      void coverShorts();
+      void closeLongs(string);
+      void closeShorts(string);
 };
 
 void Trader::tradeOnTrends() {
@@ -102,22 +109,24 @@ void Trader::tradeOnTrends() {
 
    string ctMajorSimplified = ctMajor.simplify();
    string ctMinorSimplified = ctMinor.simplify();
-   
+   bool changed = false;
    if (ctMajorSimplified != ctMinorSimplified) { // Neutral trend
-      setHtTrend(TREND_NEUTRAL);
-      tradeNeutralTrend();
+      changed = setHtTrend(TREND_NEUTRAL);
+      tradeNeutralTrend(changed);
    } else if (ctMajorSimplified == "POSITIVE") { // Positive trend
-      setHtTrend(TREND_POSITIVE);
-      tradePositiveTrend();
+      changed = setHtTrend(TREND_POSITIVE);
+      if (changed) closeShorts();
+      tradePositiveTrend(changed);
       //tradeNeutralTrend();
    } else if (ctMajorSimplified == "NEGATIVE") { // Negative trend
-      setHtTrend(TREND_NEGATIVE);
-      tradeNegativeTrend();
+      changed = setHtTrend(TREND_NEGATIVE);
+      if (changed) closeLongs();
+      tradeNegativeTrend(changed);
       //tradeNeutralTrend();
    }
 }
 
-void Trader::tradeNeutralTrend() {
+void Trader::tradeNeutralTrend(bool changed) {
    /* neutral territory, scalp setup
     * 1) major != minor
     *    open and close positions on crossing
@@ -132,109 +141,91 @@ void Trader::tradeNeutralTrend() {
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
-   BBTrend *bb = avCt.m_bb;
 
    int superMinorTrend = ctMinor.getTrend();
-   if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
-      sellLongs(); return; // close longs
-   } else if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
-      coverShorts(); return;
-   }
+   if (changed) PrintFormat("[tradeNeutralTrend] above trend changed: %d", superMinorTrend);
+   //if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
+   //   closeLongs("Neutral Trend"); return; // close longs
+   //} else if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
+   //   closeShorts("Neutral Trend"); return; // close shorts
+   //}
 
    if (major.simplify() != minor.simplify()) { // undecision
       // go with minor trend scalps
       switch (minor.getTrend()) {
          case TREND_POSITIVE_FROM_NEGATIVE: // go long
             //coverShorts();
-            if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-               goLong(bb.m_bbMiddle, bb.m_bbTop);
-            goLong(bb.m_bbBottom, bb.m_bbTop);
+            goBBLong("TNeutral-neutral");
             break;
          case TREND_NEGATIVE_FROM_POSITIVE: // go short
             //sellLongs();
-            if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-               goShort(bb.m_bbMiddle, bb.m_bbBottom);
-            goShort(bb.m_bbTop, bb.m_bbBottom);
+            goBBShort("TNeutral-neutral");
             break;
          default:
             break;
       }
    } else if (minor.simplify() == "POSITIVE") { // trending positive - trade when crossing
       if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-         coverShorts();
-         if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-            goLong(bb.m_bbMiddle, bb.m_bbTop);
-         goLong(bb.m_bbBottom, bb.m_bbTop);
+         //closeShorts();
+         goBBLong("TNeutral-positive");
       } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-         coverShorts();
-         if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-            goLong(bb.m_bbMiddle, bb.m_bbTop);
-         goLong(bb.m_bbBottom, bb.m_bbTop);
+         //closeShorts();
+         goBBLong("TNeutral-positive");
       }
    } else { // trending negative / trade when crossing
       if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-         sellLongs();
-         if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-            goShort(bb.m_bbMiddle, bb.m_bbBottom);
-         goShort(bb.m_bbTop, bb.m_bbBottom);
+         //closeLongs();
+         goBBShort("TNeutral-negative");
       } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-         sellLongs();
-         if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-            goShort(bb.m_bbMiddle, bb.m_bbBottom);
-         goShort(bb.m_bbTop, bb.m_bbBottom);
+         //closeLongs();
+         goBBShort("TNeutral-negative");
       }
    }
 }
 
-void Trader::tradePositiveTrend() {
+void Trader::tradePositiveTrend(bool changed) {
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
    HMATrend *ctMinor = avCt.m_hmaMinor;
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
-   BBTrend *bb = avCt.m_bb;
 
    int superMinorTrend = ctMinor.getTrend();
+   if (changed) PrintFormat("[tradePositiveTrend] above trend changed: %d", superMinorTrend);
    if (superMinorTrend == TREND_NEGATIVE_FROM_POSITIVE) {
-      sellLongs(); // close longs
+      closeLongs("Positive Trend"); // close longs
+      goBBShort("TPositive-Reversal", true);
       return;
    }
    
    if (minor.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-         goLong(bb.m_bbMiddle);
-      goLong(bb.m_bbBottom);
+      goBBLong("TPositive-FT-minor");
    } else if (major.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-         goLong(bb.m_bbMiddle);
-      goLong(bb.m_bbBottom);
+      goBBLong("TPositive-FT-major");
    }
 }
 
-void Trader::tradeNegativeTrend() {
+void Trader::tradeNegativeTrend(bool changed) {
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
    HMATrend *ctMinor = avCt.m_hmaMinor;
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *major = avFt.m_hmaMajor;
    HMATrend *minor = avFt.m_hmaMinor;
-   BBTrend *bb = avCt.m_bb;
 
    int superMinorTrend = ctMinor.getTrend();
+   if (changed) PrintFormat("[tradeNegativeTrend] above trend changed: %d", superMinorTrend);
    if (superMinorTrend == TREND_POSITIVE_FROM_NEGATIVE) {
-      coverShorts(); // cover shorts
+      closeShorts("Negative Trend"); // cover shorts
+      goBBLong("TNegative-Reversal", true);
       return;
    }
 
    if (minor.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-         goShort(bb.m_bbMiddle);
-      goShort(bb.m_bbTop);
+      goBBShort("TNegative-FT-minor");
    } else if (major.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-         goShort(bb.m_bbMiddle);
-      goShort(bb.m_bbTop);
+      goBBShort("TNegative-FT-major");
    }
 }
 
@@ -243,6 +234,20 @@ void Trader::tradeNegativeTrend() {
  * Orders shall be executed on timeframe and given a reason.
  * 
  */
+
+void Trader::goBBLong(string reason, bool useBar=false) {
+   if (useBar) {
+      if (m_bbBarLong == Bars) return;
+      else m_bbBarLong = Bars;
+   }
+   SignalTimeFrames stf = m_signals.getTimeFrames();
+   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
+   BBTrend *bb = avCt.m_bb;
+
+   if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
+      goLong(bb.m_bbMiddle, bb.m_bbTop, 0, reason);
+   goLong(bb.m_bbBottom, bb.m_bbTop, 0, reason);
+}
 
 void Trader::goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
    if (m_longPositions.lastBar() == Bars || m_longPositions.count() >= MAX_POSITIONS) return; // already traded / full
@@ -272,6 +277,20 @@ void Trader::goLong(double signalPrice, double priceTarget=0, double stopLoss=0,
                                        OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
       m_longPositions.setLastBar(Bars);
    } 
+}
+
+void Trader::goBBShort(string reason, bool useBar=false) {
+   if (useBar) {
+      if (m_bbBarShort == Bars) return;
+      else m_bbBarShort = Bars;
+   }
+   SignalTimeFrames stf = m_signals.getTimeFrames();
+   AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
+   BBTrend *bb = avCt.m_bb;
+
+   if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
+      goShort(bb.m_bbMiddle, bb.m_bbBottom, 0, reason);
+   goShort(bb.m_bbTop, bb.m_bbBottom, 0, reason);
 }
 
 void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="") {
@@ -304,43 +323,75 @@ void Trader::goShort(double signalPrice, double priceTarget=0, double stopLoss=0
    }
 }
 
-void Trader::sellLongs() {
+void Trader::closeLongs(string msg="") {
    double price = Bid;
    int oCount = m_longPositions.count();
    PositionValue fullPosition = m_longPositions.meanPositionValue();
+   
+   if (msg != "") PrintFormat("[AV.closeLongs] Closing %d longs from: %s", oCount, msg);
+   
+   // Close pending orders not tracked
+   for (int j = 0; j < OrdersTotal(); j++) {
+      if (OrderSelect(j, SELECT_BY_POS, MODE_TRADES)) {
+         if ((OrderSymbol() == Symbol()) && (OrderType() == OP_BUYLIMIT) &&
+             (OrderMagicNumber() == MAGICMA)) {
+            if (OrderDelete(OrderTicket()))
+               PrintFormat("[AV.closeLongs] Pending long at %.4f closed.", OrderOpenPrice());
+            else
+               PrintFormat("[AV.closeLongs] Error closing pending long at %.4f closed. (error %d)", OrderOpenPrice(), GetLastError());
+         }
+      }
+   }
+
+   // Close tracked orders
    for (int i = 0; i < oCount; i++) {
       Position *p = m_longPositions[i];
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
-         PrintFormat("[AV.sellLongs.%d/%d] Closing order %d (buy price %.4f -> sell price %.4f)", 
+         PrintFormat("[AV.closeLongs.%d/%d] Closing order %d (buy price %.4f -> sell price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
       } else {
          int check = GetLastError();
-         PrintFormat("[Av.sellLongs.%d/%d] ERROR closing order: %d", i, oCount, check);
+         PrintFormat("[AV.closeLongs.%d/%d] ERROR closing order: %d", i, oCount, check);
       }
    }
    if (oCount > 0) {
-      PrintFormat("[AV.sellLongs] Closed %d orders (size %.2f) / (long MP %.4f -> sell at %.4f)",
+      PrintFormat("[AV.closeLongs] Closed %d orders (size %.2f) / (long MP %.4f -> sell at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
       m_longPositions.clear();
    }
 }
 
-void Trader::coverShorts() {
+void Trader::closeShorts(string msg="") {
    double price = Ask;
    int oCount = m_shortPositions.count();
    PositionValue fullPosition = m_shortPositions.meanPositionValue();
+   
+   if (msg != "") PrintFormat("[AV.closeShorts] Closing %d shorts from: %s", oCount, msg);
+
+   // Close pending orders not tracked
+   for (int j = 0; j < OrdersTotal(); j++) {
+      if (OrderSelect(j, SELECT_BY_POS, MODE_TRADES)) {
+         if ((OrderSymbol() == Symbol()) && (OrderType() == OP_SELLLIMIT) &&
+             (OrderMagicNumber() == MAGICMA)) {
+            if (OrderDelete(OrderTicket()))
+               PrintFormat("[AV.closeShorts] Pending short at %.4f closed. (error %d)", OrderOpenPrice(), GetLastError());
+         }
+      }
+   }
+
+   // Close tracked orders
    for (int i = 0; i < oCount; i++) {
       Position *p = m_shortPositions[i];
       if (OrderClose(p.m_ticket, p.m_size, price, 3) == true) {
-         PrintFormat("[AV.coverShorts.%d/%d] Closing order %d (sell price %.4f -> buy price %.4f)", 
+         PrintFormat("[AV.closeShorts.%d/%d] Closing order %d (sell price %.4f -> buy price %.4f)", 
                      i, oCount, p.m_ticket, p.m_price, price);
       } else {
          int check = GetLastError();
-         PrintFormat("[Av.coverShorts.%d/%d] ERROR closing order: %d", i, oCount, check);
+         PrintFormat("[AV.closeShorts.%d/%d] ERROR closing order: %d", i, oCount, check);
       }
    }
    if (oCount > 0) {
-      PrintFormat("[AV.coverShorts] Closed %d orders (size %.2f) / (sell MP %.4f -> cover at %.4f)",
+      PrintFormat("[AV.closeShorts] Closed %d orders (size %.2f) / (sell MP %.4f -> cover at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, price);
       m_shortPositions.clear();
    }
