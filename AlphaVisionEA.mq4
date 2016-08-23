@@ -13,6 +13,9 @@
 
 #include <Positions\Positions.mqh>
 #include <Positions\AlphaVisionTrader.mqh>
+#include <Positions\AlphaVisionTraderSimple.mqh>
+#include <Positions\AlphaVisionTraderPNN.mqh>
+
 
 #include <Signals\AlphaVision.mqh>
 
@@ -56,7 +59,7 @@ input int iSuperTimeFrame = PERIOD_W1;
 ////
 //// GLOBALS
 ////
-AlphaVisionTrader *gTrader; // Orders maker
+AlphaVisionTraderSimple *gTrader; // Orders maker
 SignalTimeFrames gSignalTF;
 
 int gCountMinutes;
@@ -88,7 +91,7 @@ int OnInit() {
 
 
    // loading current positions
-   gTrader = new AlphaVisionTrader(new Positions("LONG"), new Positions("SHORT"), avSignals);
+   gTrader = new AlphaVisionTraderSimple(new Positions("LONG"), new Positions("SHORT"), avSignals);
    gTrader.loadCurrentOrders();
    
    gCountMinutes = 0;
