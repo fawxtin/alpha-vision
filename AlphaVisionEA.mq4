@@ -93,12 +93,20 @@ int OnInit() {
    // loading current positions
    gTrader = new AlphaVisionTraderSimple(new Positions("LONG"), new Positions("SHORT"), avSignals);
    gTrader.loadCurrentOrders();
+   gTrader.enableLogging();
    
    gCountMinutes = 0;
    gCountTicks = 0;
    EventSetTimer(60); // Every 1 minute, call onTimer
  
    return INIT_SUCCEEDED;
+}
+
+// OnTester - close positions
+double OnTester() {
+   gTrader.closeLongs("End-Of-Test");
+   gTrader.closeShorts("End-Of-Test");
+   return 0;
 }
 
 void OnDeinit(const int reason) {

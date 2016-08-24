@@ -51,8 +51,8 @@ void AlphaVisionTraderSimple::tradeOnTrends() {
       signalCt = m_signals.getTrendCt();
       if (signalCt.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
-         closeShorts();
-         goBBShort(bbCt, "Positive-reversal", true);
+         closeShorts("Positive-Trend");
+         goBBLong(bbCt, "Positive-Reversal", true);
       }
       tradeSimple();
    } else if (simplifiedMj == "NEGATIVE") { // Negative trend
@@ -60,8 +60,8 @@ void AlphaVisionTraderSimple::tradeOnTrends() {
       signalCt = m_signals.getTrendCt();
       if (signalCt.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
-         closeLongs();
-         goBBLong(bbCt, "Negative-reversal", true);
+         closeLongs("Negative-Trend");
+         goBBShort(bbCt, "Negative-Reversal", true);
       }
       tradeSimple();
    }
@@ -71,19 +71,20 @@ void AlphaVisionTraderSimple::tradeSimple() {
    SignalTimeFrames stf = m_signals.getTimeFrames();
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
    BBTrend *bbCt = avCt.m_bb;
+   BBTrend *bbCt3 = avCt.m_bb3;
 
    AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
    HMATrend *hmaFtMj = avFt.m_hmaMajor;
    HMATrend *hmaFtMn = avFt.m_hmaMinor;
 
-   // using current trend
+   // using fast trend signals and current trend BB positioning
    if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
-      goBBLong(bbCt, "TSimple-bb");
+      goBBLong(bbCt, "TSimple-bb-hmaFtMj", false, 0, bbCt3.m_bbBottom - m_mkt.vspread);
    } else if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
-      goBBLong(bbCt, "TSimple-bb");
+      goBBLong(bbCt, "TSimple-bb-hmaFtMn", false, 0, bbCt3.m_bbBottom - m_mkt.vspread);
    } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
-      goBBShort(bbCt, "TSimple-bb");
+      goBBShort(bbCt, "TSimple-bb-hmaFtMj", false, 0, bbCt3.m_bbTop + m_mkt.vspread);
    } else if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
-      goBBShort(bbCt, "TSimple-bb");
+      goBBShort(bbCt, "TSimple-bb-hmaFtMn", false, 0, bbCt3.m_bbTop + m_mkt.vspread);
    }
 }

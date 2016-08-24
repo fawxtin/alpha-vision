@@ -2,10 +2,15 @@
 
 * Alpha Vision
 
+** MQL
+
+*** use external DLLs
+
 ** Learning Techniques
 *** Algorithmic Trading
 *** Quantitative Trading and Money Management
 *** Quantitative Trading Strategies
+*** Ralph Vince - Mathematics for Market
 
 ** Trends
    Calculate trends based on config input
@@ -20,11 +25,17 @@
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
-*** TODO Update existing positions
-*** TODO Find out where its performing good/bad
-*** DONE Bug trying to close pending orders?
+*** TODO Orders Pool
+    mql isnt executing multiple orders in same context, so
+    the best way to deal with it, is to create a schema of
+    orderPool, where we send opening requests and the orderManager
+    create those orders when it can.
 
-*** TODO Execute Positions
+*** DONE Orders File Log
+
+*** TODO Implement missing indicators on AV
+
+*** TODO Update existing positions
 
 *** TODO Calculate best Entry & Exit / Brain
     Use signals to provide a good entry&exit point.
@@ -84,12 +95,13 @@
       - FT => Any
 	Look for buy positions in bottom BB at CT
 
-
-
-
 *** Risk & Reward Optimization
 
 ** Signals / Heart
    Calculate and use Trends to capture signals.
    Thats the AV heart, providing info on whether the market
    shall be going.
+
+*** TODO Find out where its performing good/bad
+    On close positions write down in csv the PL of each trade
+

@@ -28,23 +28,27 @@ class AlphaVision : public HashValue {
       HMATrend *m_hmaMinor;
       HMATrend *m_hmaMajor;
       BBTrend *m_bb;
+      BBTrend *m_bb3;
    
-      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb) {
+      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3) {
          m_hmaMajor = major;
          m_hmaMinor = minor;
          m_bb = bb;
+         m_bb3 = bb3;
          // TODO: create BB 3 stdDev
       }
       void ~AlphaVision() {
          delete m_hmaMinor;
          delete m_hmaMajor;
          delete m_bb;
+         delete m_bb3;
       }
       
       void calculate() {
          m_hmaMajor.calculate();
          m_hmaMinor.calculate();
          m_bb.calculate();
+         m_bb3.calculate();
       }
 };
 
@@ -66,7 +70,8 @@ class AlphaVisionSignals : public Signals {
          if (! m_hash.hContainsKey(tfKey)) {
             m_hash.hPut(tfKey, new AlphaVision(new HMATrend(timeframe, period2, period3),
                                                new HMATrend(timeframe, period1, period2),
-                                               new BBTrend(timeframe)));
+                                               new BBTrend(timeframe),
+                                               new BBTrend(timeframe, 3.0)));
             return true;
          }
          else return false;
