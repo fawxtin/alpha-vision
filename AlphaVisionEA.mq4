@@ -91,9 +91,8 @@ int OnInit() {
 
 
    // loading current positions
-   gTrader = new AlphaVisionTraderSimple(new Positions("LONG"), new Positions("SHORT"), avSignals);
+   gTrader = new AlphaVisionTraderSimple(new Positions("LONG", true), new Positions("SHORT", true), avSignals);
    gTrader.loadCurrentOrders();
-   gTrader.enableLogging();
    
    gCountMinutes = 0;
    gCountTicks = 0;
@@ -144,7 +143,7 @@ void OnTick() {
       Print("Too few bars.");
       return;
    }
-
+   gTrader.cleanOrders(); // remove already closed orders
    AlphaVisionSignals *signals = gTrader.getSignals();
 
    signals.calculateOn(gSignalTF.fast);

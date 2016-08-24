@@ -13,7 +13,7 @@
 #define __POSITIONS_BASIC__ 1
 
 #define MAGICMA         19851408
-#define MAX_POSITIONS   12
+#define MAX_POSITIONS   16
 #define LOT_SIZE        0.01
 
 
@@ -33,32 +33,74 @@ struct PositionValue {
 };
 
 // Single Position class
-class Position {  
+class Position {
    public:
       int m_ticket;
+      string m_entryType;
       datetime m_open;
       double m_size;
       double m_price;
+      double m_marketPrice; // when opening the position (for limit/stop orders)
+      double m_signalPrice; // the signal price when it occurred the opening position
       double m_target;
       double m_stopLoss;
+      string m_reason;
+      datetime m_closeTS;
+      double m_closePrice;
       
       Position() {};
-      Position(int ticket, datetime open, double size, double price, double target=0, double stopLoss=0):
-         m_ticket(ticket), m_open(open), m_size(size), m_price(price), m_target(target), m_stopLoss(stopLoss) {};
+      Position(int ticket, string entryType, double marketPrice, double signalPrice): m_ticket(ticket), m_entryType(entryType), 
+         m_marketPrice(marketPrice), m_signalPrice(signalPrice) {
+         load();
+      };
+
+      void load() {
+         if (OrderSelect(m_ticket, SELECT_BY_TICKET)) {
+            m_open = OrderOpenTime();
+            m_size = OrderLots();
+            m_price = OrderOpenPrice();
+            m_target = OrderTakeProfit();
+            m_stopLoss = OrderStopLoss();
+            m_reason = OrderComment();
+            m_closeTS = OrderCloseTime();
+            m_closePrice = OrderClosePrice();
+         }
+      }
+            
+      int barOnOpen() { return iBarShift(Symbol(), 0, m_open); }
       
-      int barOnOpen() {
-         return iBarShift(Symbol(), 0, m_open);
+      bool isPending() {
+         load();
+         if (m_closeTS > 0) return false;
+         else return true;
+      }
+      
+      void close(double price) {
+         if (isPending()) {
+            PrintFormat("[Position] Deleting pending position %d", m_ticket);
+            if (!OrderDelete(m_ticket))
+               PrintFormat("[Position] Error deleting position %d: %d", m_ticket, GetLastError());
+         } else {
+            PrintFormat("[Position] Closing position %d", m_ticket);
+            if (!OrderClose(m_ticket, m_size, price, 3))
+               PrintFormat("[Position] Error closing position %d: %d", m_ticket, GetLastError());
+         }
       }
       
       void print() {
          PrintFormat("[Position - %d] %.4f / %.2f  -> %.4f, %.4f (Bar %d)",
                      m_ticket, m_price, m_size, m_target, m_stopLoss, barOnOpen());
       }
+      
 };
 
 // Multiple Positions class
 class Positions {
    /* TODO: deal with an array of positions. */
+   private:
+      int m_logHandleOpen;
+      int m_logHandleClosed;
+
    protected:
       // # positions attributte
       LList<Position> *m_positions;
@@ -66,12 +108,21 @@ class Positions {
       int m_lastBar;
 
    public:
-      Positions(string orderType): m_orderType(orderType), m_lastBar(0) { m_positions = new LList<Position>(); };
-      void ~Positions() { delete m_positions; };
+      Positions(string orderType, bool logging=false): m_orderType(orderType), m_lastBar(0), m_logHandleOpen(0), m_logHandleClosed(0) {
+         m_positions = new LList<Position>();
+         if (logging) enableLogging();
+      };
+      void ~Positions() {
+         delete m_positions;
+         if (m_logHandleOpen > 0) FileClose(m_logHandleOpen);
+         if (m_logHandleClosed > 0) FileClose(m_logHandleClosed);
+      };
+      
       void loadCurrentOrders(bool noMagicMA=false);
+      void cleanClosedOrders(bool noMagicMA=false);
       bool add(Position *position);
-      bool close(int idx);
-      void clear();
+      bool close(int idx, double price=0, string reason="");
+      void cleanOrders();
       int count() { return m_positions.length(); }
       string orderType() { return m_orderType; }
       
@@ -98,8 +149,9 @@ class Positions {
          int ccount = count();
          PositionValue pv = {0, 0};
          for (int i = 0; i < ccount; i++) {
-            if (printP) m_positions[i].print();
             Position *p = m_positions[i];
+            if (printP) p.print();
+            if (p.isPending()) break;
             pv.size += p.m_size;
             pv.price += m_positions[i].m_price * p.m_size;
          }
@@ -111,9 +163,20 @@ class Positions {
          return pv;
       };
       
+      // Logging
+      void enableLogging();
+      double calculateRiskRewardRatio(Position *p);
+      void logOpenPosition(Position *p);
+      void logClosedPosition(Position *p, string exitReason);
+      
       //double getMeanTargetPrice();
       //double getMeanStopLoss();
 };
+
+
+////
+//// Handling the list of positions
+////
 
 bool Positions::add(Position *position) {
    if (count() < MAX_POSITIONS) {
@@ -121,23 +184,22 @@ bool Positions::add(Position *position) {
       position.print();
       m_positions.add(position);
       this.isLastBarP(position.barOnOpen());
-      
+      if (m_logHandleOpen > 0) logOpenPosition(position);
+
       return true;
    }
    return false;
 }
 
-bool Positions::close(int idx) {
+bool Positions::close(int idx, double price=0, string reason="") {
    if ((idx >= MAX_POSITIONS) || (idx > count())) return false;
    // check which position is last after this one is removed
+   Position *p = m_positions[idx];
+   p.close(price);
+   if (m_logHandleClosed > 0) logClosedPosition(p, reason);
    m_positions.drop(idx);
+   
    return true;
-}
-
-void Positions::clear() {
-   while (this.count() > 0) {
-      this.close(0);
-   }
 }
 
 void Positions::loadCurrentOrders(bool noMagicMA=false) { // could be LONG / SHORT
@@ -148,13 +210,74 @@ void Positions::loadCurrentOrders(bool noMagicMA=false) { // could be LONG / SHO
           (OrderSymbol() == Symbol()) && 
           (noMagicMA || (OrderMagicNumber() == MAGICMA))) {
          // orders generated by ea in this symbol
-         if ((m_orderType == "LONG") && (OrderType() == OP_BUY)) {
-            this.add(new Position(OrderTicket(), OrderOpenTime(), OrderLots(), OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
-         } else if ((m_orderType == "SHORT") && (OrderType() == OP_SELL)) {
-            this.add(new Position(OrderTicket(), OrderOpenTime(), OrderLots(), OrderOpenPrice(), OrderTakeProfit(), OrderStopLoss()));
+         if ((m_orderType == "LONG") && 
+             (OrderType() == OP_BUY || OrderType() == OP_BUYLIMIT || OrderType() == OP_BUYSTOP)) {
+            this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
+         } else if ((m_orderType == "SHORT") && 
+                    (OrderType() == OP_SELL || OrderType() == OP_SELLLIMIT || OrderType() == OP_SELLSTOP)) {
+            this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
          }
       }
    }
 }
+
+void Positions::cleanOrders() { // could be LONG / SHORT
+   int i = 0;
+   while (i < m_positions.length()) {
+      Position *p = m_positions[i];
+      
+      if (!OrderSelect(p.m_ticket, SELECT_BY_TICKET)) close(i); // order deleted
+      else {
+         if (OrderCloseTime() > 0) // already closed
+            close(i);
+         else // keep searching
+            i++;
+      }
+   }
+}
+
+////
+//// Logging part
+////
+
+void Positions::enableLogging(void) {
+   m_logHandleOpen = FileOpen(StringFormat("%s_%s_open.csv", Symbol(), m_orderType), FILE_CSV|FILE_WRITE);
+   m_logHandleClosed = FileOpen(StringFormat("%s_%s_closed.csv", Symbol(), m_orderType), FILE_CSV|FILE_WRITE);
+   if (m_logHandleOpen > 0  && m_logHandleClosed > 0) {
+      // header
+      FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",
+                "SignalPrice", "MarketPrice", "Target", "StopLoss", "RiskRewardRatio", "Reason");
+      FileWrite(m_logHandleClosed, "Position", "EntryType", "Ticket", "EntryTS", "ExitTS", "Size",
+                "EntryPrice", "ExitPrice", "Target", "StopLoss", "RiskRewardRatio", "PL", "EntryReason", "ExitReason");
+   } else
+      PrintFormat("[Trader] error while enabling log: %d", GetLastError());
+}
+
+double Positions::calculateRiskRewardRatio(Position *p) {
+   double riskRewardRatio = 0;
+   if (p.m_target > 0 && p.m_stopLoss > 0) { // risk & reward ratio wont work on dynamic orders
+      riskRewardRatio = MathAbs(p.m_target - p.m_price) / MathAbs(p.m_stopLoss - p.m_price);
+   }
+   
+   return riskRewardRatio;
+}
+
+void Positions::logOpenPosition(Position *p) {
+   double riskRewardRatio = calculateRiskRewardRatio(p);
+   if (m_logHandleOpen > 0)
+      FileWrite(m_logHandleOpen, m_orderType, p.m_entryType, p.m_ticket, p.m_open, p.m_size, 
+                p.m_signalPrice, p.m_marketPrice, p.m_target, p.m_stopLoss, riskRewardRatio, p.m_reason);
+}
+
+void Positions::logClosedPosition(Position *p, string exitReason) {
+   double riskRewardRatio = calculateRiskRewardRatio(p);
+   double profitOrLoss = 0;
+   if (m_orderType == "LONG") profitOrLoss = p.m_closePrice - p.m_price;
+   else if (m_orderType == "SHORT") profitOrLoss = p.m_price - p.m_closePrice;
+   if (m_logHandleClosed > 0)
+      FileWrite(m_logHandleClosed, m_orderType, p.m_entryType, p.m_ticket, p.m_open, p.m_closeTS, p.m_size,
+                p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, riskRewardRatio, p.m_reason, exitReason);
+}
+
 
 #endif
