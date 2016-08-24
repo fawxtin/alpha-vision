@@ -56,8 +56,8 @@ void AlphaVisionTrader::goBBLong(BBTrend *bb, string reason, bool useBar=false, 
    else m_lastLong = TimeCurrent();
 
    if (bb.getTrend() == TREND_POSITIVE || bb.getTrend() == TREND_POSITIVE_BREAKOUT)
-      goLong(bb.m_bbMiddle, getTarget(target, bb.m_bbTop), stopLoss, StringFormat("%s_fromMiddle", reason));
-   goLong(bb.m_bbBottom, getTarget(target, bb.m_bbTop), stopLoss, StringFormat("%s_fromBottom", reason));
+      goLong(bb.m_bbMiddle, getTarget(target, bb.m_bbTop), stopLoss, StringFormat("%s_middle", reason));
+   goLong(bb.m_bbBottom, getTarget(target, bb.m_bbTop), stopLoss, StringFormat("%s_bottom", reason));
 }
 
 void AlphaVisionTrader::goBBShort(BBTrend *bb, string reason, bool useBar=false, double target=0, double stopLoss=0) {
@@ -70,7 +70,7 @@ void AlphaVisionTrader::goBBShort(BBTrend *bb, string reason, bool useBar=false,
 
 
    if (bb.getTrend() == TREND_NEGATIVE || bb.getTrend() == TREND_NEGATIVE_OVERSOLD)
-      goShort(bb.m_bbMiddle, getTarget(target, bb.m_bbBottom), stopLoss, StringFormat("%s_fromMiddle", reason));
-   goShort(bb.m_bbTop, getTarget(target, bb.m_bbBottom), stopLoss, StringFormat("%s_fromTop", reason));
+      goShort(bb.m_bbMiddle, getTarget(target, bb.m_bbBottom), stopLoss, StringFormat("%s_middle", reason));
+   goShort(bb.m_bbTop, getTarget(target, bb.m_bbBottom), stopLoss, StringFormat("%s_top", reason));
 }
 

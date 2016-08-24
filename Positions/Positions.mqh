@@ -82,10 +82,16 @@ class Position {
             PrintFormat("[Position] Deleting pending position %d", m_ticket);
             if (!OrderDelete(m_ticket))
                PrintFormat("[Position] Error deleting position %d: %d", m_ticket, GetLastError());
+            else {
+               m_closeTS = TimeCurrent();
+               m_closePrice = m_price;
+            }
          } else {
             PrintFormat("[Position] Closing position %d", m_ticket);
             if (!OrderClose(m_ticket, m_size, price, 3))
                PrintFormat("[Position] Error closing position %d: %d", m_ticket, GetLastError());
+            else
+               load();
          }
       }
       
@@ -249,7 +255,7 @@ void Positions::enableLogging(void) {
       // header
       FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",
                 "SignalPrice", "MarketPrice", "Target", "StopLoss", "RiskRewardRatio", "Reason");
-      FileWrite(m_logHandleClosed, "Position", "EntryType", "Ticket", "EntryTS", "ExitTS", "Size",
+      FileWrite(m_logHandleClosed, "Position", "EntryType", "OutType", "Ticket", "EntryTS", "ExitTS", "Size",
                 "EntryPrice", "ExitPrice", "Target", "StopLoss", "RiskRewardRatio", "PL", "EntryReason", "ExitReason");
    } else
       PrintFormat("[Trader] error while enabling log: %d", GetLastError());
@@ -276,9 +282,12 @@ void Positions::logClosedPosition(Position *p, string exitReason) {
    double profitOrLoss = 0;
    if (m_positionType == "LONG") profitOrLoss = p.m_closePrice - p.m_price;
    else if (m_positionType == "SHORT") profitOrLoss = p.m_price - p.m_closePrice;
-   if (m_logHandleClosed > 0)
-      FileWrite(m_logHandleClosed, m_positionType, p.m_entryType, p.m_ticket, p.m_open, p.m_closeTS, p.m_size,
-                p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, riskRewardRatio, profitOrLoss, p.m_reason, exitReason);
+   if (m_logHandleClosed > 0) {
+      string orderType = StringSubstr(EnumToString((ENUM_ORDER_TYPE) p.m_orderType), 11);
+      FileWrite(m_logHandleClosed, m_positionType, p.m_entryType, orderType, p.m_ticket, 
+                p.m_open, p.m_closeTS, p.m_size, p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, 
+                riskRewardRatio, profitOrLoss, p.m_reason, exitReason);
+   }
 }
 
 
