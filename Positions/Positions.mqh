@@ -276,7 +276,7 @@ void Positions::logClosedPosition(Position *p, string exitReason) {
    else if (m_orderType == "SHORT") profitOrLoss = p.m_price - p.m_closePrice;
    if (m_logHandleClosed > 0)
       FileWrite(m_logHandleClosed, m_orderType, p.m_entryType, p.m_ticket, p.m_open, p.m_closeTS, p.m_size,
-                p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, riskRewardRatio, p.m_reason, exitReason);
+                p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, riskRewardRatio, profitOrLoss, p.m_reason, exitReason);
 }
 
 
