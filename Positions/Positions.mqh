@@ -37,7 +37,8 @@ class Position {
    public:
       int m_ticket;
       string m_entryType;
-      datetime m_open;
+      datetime m_entryTS;
+      datetime m_openTS;
       double m_size;
       double m_price;
       double m_marketPrice; // when opening the position (for limit/stop orders)
@@ -52,12 +53,13 @@ class Position {
       Position() {};
       Position(int ticket, string entryType, double marketPrice, double signalPrice): m_ticket(ticket), m_entryType(entryType), 
          m_marketPrice(marketPrice), m_signalPrice(signalPrice) {
-         load();
+         load(true);
       };
 
-      void load() {
+      void load(bool firstTime=false) {
          if (OrderSelect(m_ticket, SELECT_BY_TICKET)) {
-            m_open = OrderOpenTime();
+            if (firstTime) m_entryTS = OrderOpenTime();
+            m_openTS = OrderOpenTime();
             m_size = OrderLots();
             m_price = OrderOpenPrice();
             m_target = OrderTakeProfit();
@@ -69,7 +71,7 @@ class Position {
          }
       }
             
-      int barOnOpen() { return iBarShift(Symbol(), 0, m_open); }
+      int barOnOpen() { return iBarShift(Symbol(), 0, m_entryTS); }
       
       bool isPending() {
          load();
@@ -255,7 +257,7 @@ void Positions::enableLogging(void) {
       // header
       FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",
                 "SignalPrice", "MarketPrice", "Target", "StopLoss", "RiskRewardRatio", "Reason");
-      FileWrite(m_logHandleClosed, "Position", "EntryType", "OutType", "Ticket", "EntryTS", "ExitTS", "Size",
+      FileWrite(m_logHandleClosed, "Position", "EntryType", "OutType", "Ticket", "EntryTS", "OpenTS", "ExitTS", "Size",
                 "EntryPrice", "ExitPrice", "Target", "StopLoss", "RiskRewardRatio", "PL", "EntryReason", "ExitReason");
    } else
       PrintFormat("[Trader] error while enabling log: %d", GetLastError());
@@ -273,7 +275,7 @@ double Positions::calculateRiskRewardRatio(Position *p) {
 void Positions::logOpenPosition(Position *p) {
    double riskRewardRatio = calculateRiskRewardRatio(p);
    if (m_logHandleOpen > 0)
-      FileWrite(m_logHandleOpen, m_positionType, p.m_entryType, p.m_ticket, p.m_open, p.m_size, 
+      FileWrite(m_logHandleOpen, m_positionType, p.m_entryType, p.m_ticket, p.m_openTS, p.m_size, 
                 p.m_signalPrice, p.m_marketPrice, p.m_target, p.m_stopLoss, riskRewardRatio, p.m_reason);
 }
 
@@ -284,8 +286,8 @@ void Positions::logClosedPosition(Position *p, string exitReason) {
    else if (m_positionType == "SHORT") profitOrLoss = p.m_price - p.m_closePrice;
    if (m_logHandleClosed > 0) {
       string orderType = StringSubstr(EnumToString((ENUM_ORDER_TYPE) p.m_orderType), 11);
-      FileWrite(m_logHandleClosed, m_positionType, p.m_entryType, orderType, p.m_ticket, 
-                p.m_open, p.m_closeTS, p.m_size, p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, 
+      FileWrite(m_logHandleClosed, m_positionType, p.m_entryType, orderType, p.m_ticket, p.m_entryTS,
+                p.m_openTS, p.m_closeTS, p.m_size, p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, 
                 riskRewardRatio, profitOrLoss, p.m_reason, exitReason);
    }
 }
