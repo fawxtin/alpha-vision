@@ -2,57 +2,58 @@
 
 * Alpha Vision
 
-** MQL
-
-*** use external DLLs
-
 ** Learning Techniques
-*** Algorithmic Trading
-*** Quantitative Trading and Money Management
-*** Quantitative Trading Strategies
 *** Ralph Vince - Mathematics for Market
+    DEADLINE: <2016-09-28 qua>
+    Provide a resume on the subject.
 
-** Spreadsheet results 
-   =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
+*** Quantitative Trading and Money Management
 
 ** Trends
-   Calculate trends based on config input
+   Calculate trends: BB; HMA; ATR; Stochastic; MACD
+
+*** DONE Enum for Trends
+    DEADLINE: <2016-08-26 sex>
+
+*** DONE Implement missing indicators on AV
+    DEADLINE: <2016-08-26 sex>
+    - ok ATR
+    - ok Stochastic
+    - ok MACD
+    - RSI?
 
 *** TODO provide a trend input structure / for each trend type
-*** BB
-*** HMA
-*** ATR
-*** Stochastic
-*** MACD
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
-*** TODO Orders Pool?
-
-*** DONE Orders File Log
-
-*** TODO Implement missing indicators on AV
-    - ATR
-    - Stochastic
-    - MACD
-    - RSI?
-
-*** TODO Update existing positions
-
 *** TODO Trader Algorithms
+    DEADLINE: <2016-08-27 sáb>
     - Trend inclined (use major/current/fast trends)
     - TradingRange Helper! (signals with support&resistance levels)
     - Scalper (using only fast trends)
     - Swinger (using support&resistence levels / higher targets and stopLosses)
+    - Orchestra: macd for signals, stochastic for confirmation (overbought/oversold)
+      and BB for entry/exit points.
+
+*** TODO Update existing positions
+
+*** TODO Orders Pool?
 
 *** Risk & Reward Optimization
 
-** Signals / Heart
+** Signals Comparison
    Calculate and use Trends to capture signals.
-   Thats the AV heart, providing info on whether the market
-   shall be going.
+   - SpreadSheet results formula:
+     =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
 
-*** DONE Find out where its performing good/bad
-    On close positions write down in csv the PL of each trade
+*** TODO Elaborate rule of symbols to use on different trade signals
+    DEADLINE: <2016-08-28 dom>
 
+*** TODO Check/compare different algorithm trade signals
+    Those implemented on Trader Algorithms
+
+** MQL
+
+*** use external DLLs
+*** Flux Signals

@@ -14,6 +14,7 @@
 #include <Trends\ATR.mqh>
 #include <Trends\BB.mqh>
 #include <Trends\Stochastic.mqh>
+#include <Trends\MACD.mqh>
 
 #include <Signals\Signals.mqh>
 
@@ -29,19 +30,26 @@ class AlphaVision : public HashValue {
       HMATrend *m_hmaMajor;
       BBTrend *m_bb;
       BBTrend *m_bb3;
+      StochasticTrend *m_stoch;
+      MACDTrend *m_macd;
+      
    
-      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3) {
+      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3, StochasticTrend *stoch, MACDTrend *macd) {
          m_hmaMajor = major;
          m_hmaMinor = minor;
          m_bb = bb;
          m_bb3 = bb3;
-         // TODO: create BB 3 stdDev
+         m_stoch = stoch;
+         m_macd = macd;
       }
+
       void ~AlphaVision() {
          delete m_hmaMinor;
          delete m_hmaMajor;
          delete m_bb;
          delete m_bb3;
+         delete m_stoch;
+         delete m_macd;
       }
       
       void calculate() {
@@ -49,6 +57,8 @@ class AlphaVision : public HashValue {
          m_hmaMinor.calculate();
          m_bb.calculate();
          m_bb3.calculate();
+         m_stoch.calculate();
+         m_macd.calculate();
       }
 };
 
@@ -71,7 +81,9 @@ class AlphaVisionSignals : public Signals {
             m_hash.hPut(tfKey, new AlphaVision(new HMATrend(timeframe, period2, period3),
                                                new HMATrend(timeframe, period1, period2),
                                                new BBTrend(timeframe),
-                                               new BBTrend(timeframe, 3.0)));
+                                               new BBTrend(timeframe, 3.0),
+                                               new StochasticTrend(timeframe),
+                                               new MACDTrend(timeframe)));
             return true;
          }
          else return false;

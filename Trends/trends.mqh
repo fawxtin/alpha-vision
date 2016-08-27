@@ -10,18 +10,18 @@
 #ifndef __TRENDS__
 #define __TRENDS__ "TRENDS"
 
-#define TREND_POSITIVE_BREAKOUT       4
-#define TREND_POSITIVE_OVERBOUGHT     3
-#define TREND_POSITIVE_FROM_NEGATIVE  2
-#define TREND_POSITIVE                1
-#define TREND_NEGATIVE               -1
-#define TREND_NEGATIVE_FROM_POSITIVE -2
-#define TREND_NEGATIVE_OVERSOLD      -3
-#define TREND_NEGATIVE_BREAKOUT      -4
-#define TREND_NEUTRAL                 0
-#define TREND_STABLE                  0
-#define TREND_EMPTY                  -111
-
+enum TRENDS {
+   TREND_EMPTY,
+   TREND_NEUTRAL,
+   TREND_POSITIVE_BREAKOUT,
+   TREND_POSITIVE,
+   TREND_NEGATIVE,
+   TREND_POSITIVE_OVERBOUGHT,
+   TREND_POSITIVE_FROM_NEGATIVE,
+   TREND_NEGATIVE_FROM_POSITIVE,
+   TREND_NEGATIVE_OVERSOLD,
+   TREND_NEGATIVE_BREAKOUT
+};
 
 // TODO: create a class that keeps trend values
 
