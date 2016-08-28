@@ -41,18 +41,18 @@ void AlphaVisionTraderSimple::tradeOnTrends() {
    string simplifiedMj = hmaCtMj.simplify();
    string simplifiedMn = hmaCtMn.simplify();
    if (simplifiedMj != simplifiedMn) { // Neutral trend
-      m_signals.setTrendCt(TREND_NEUTRAL);
-      signalCt = m_signals.getTrendCt();
+      m_signals.setSignalCt(SSIGNAL_NEUTRAL);
+      signalCt = m_signals.getSignalCt();
       if (signalCt.changed) {
-         if (signalCt.last == TREND_NEGATIVE)
+         if (signalCt.last == SSIGNAL_NEGATIVE)
             goBBLong(bbFt, "Neutral-reversal", true, bbCt.m_bbTop, bbFt3.m_bbBottom);
-         else if (signalCt.last == TREND_POSITIVE)
+         else if (signalCt.last == SSIGNAL_POSITIVE)
             goBBShort(bbFt, "Neutral-reversal", true, bbCt.m_bbBottom, bbFt3.m_bbTop);
       }
       tradeSimple();
    } else if (simplifiedMj == "POSITIVE") { // Positive trend
-      m_signals.setTrendCt(TREND_POSITIVE);
-      signalCt = m_signals.getTrendCt();
+      m_signals.setSignalCt(SSIGNAL_POSITIVE);
+      signalCt = m_signals.getSignalCt();
       if (signalCt.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
          closeShorts("Positive-Trend");
@@ -60,8 +60,8 @@ void AlphaVisionTraderSimple::tradeOnTrends() {
       }
       tradeSimple();
    } else if (simplifiedMj == "NEGATIVE") { // Negative trend
-      m_signals.setTrendCt(TREND_NEGATIVE);
-      signalCt = m_signals.getTrendCt();
+      m_signals.setSignalCt(SSIGNAL_NEGATIVE);
+      signalCt = m_signals.getSignalCt();
       if (signalCt.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalCt.current));
          closeLongs("Negative-Trend");

@@ -13,11 +13,16 @@
 #define __TRENDS_MACD__ 1
 
 
+
 class MACDTrend : public Trend {
    /*
     * fast 12; slow 26; sma 9
     *
     */
+   private:
+      int m_crossBarUp;
+      int m_crossBarDown;
+    
    public:
       int m_timeframe;
       int m_pFast;
@@ -31,6 +36,12 @@ class MACDTrend : public Trend {
       MACDTrend(int timeframe, int fast=12, int slow=26, int sma=9) : m_pFast(fast), m_pSlow(slow), m_pSma(sma) {
          m_trendType = "MACD";
          m_timeframe = timeframe; 
+         m_crossBarUp = 0;
+         m_crossBarDown = 0;
+         
+         m_trendHst.last = TREND_EMPTY;
+         m_trendHst.current = TREND_EMPTY;
+         m_trendHst.changed = false;
       };
       
       void calculate();
@@ -39,21 +50,43 @@ class MACDTrend : public Trend {
 void MACDTrend::calculate(void) {
    m_main = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
    m_main_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
-   m_signal = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
-   m_signal_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
+   m_signal = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_SIGNAL, 0);
+   m_signal_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_SIGNAL, 0);
    
    // TODO: read more about macd and the better way to deal with its signals
-   if (m_signal >= m_main) { // positive region
-      if (m_signal_i < m_main_i) { // crossing up
-         m_trend = TREND_POSITIVE_FROM_NEGATIVE;
+   if (m_main >= m_signal) { // positive region
+      if (m_main_i < m_signal_i) { // crossing up
+         setTrendHst(TREND_POSITIVE_FROM_NEGATIVE);
+         if (m_crossBarUp != Bars) {
+            PrintFormat("[trend.macd] Crossed UP at %.4f!", m_signal);
+            m_crossBarUp = Bars;
+         }
       } else {
-         m_trend = TREND_POSITIVE;
+         setTrendHst(TREND_POSITIVE);
+         if (m_trendHst.changed == true && 
+             m_trendHst.last == TREND_NEGATIVE &&
+             m_crossBarUp != Bars) {
+            m_trend = TREND_POSITIVE_FROM_NEGATIVE;
+            PrintFormat("[trend.macd] (Forced) Crossed UP at %.4f!", m_signal);
+            m_crossBarUp = Bars;
+         }
       }
    } else {
-      if (m_signal_i > m_main_i) { // crossing down
-         m_trend = TREND_NEGATIVE_FROM_POSITIVE;
+      if (m_main_i > m_signal_i) { // crossing down
+         setTrendHst(TREND_NEGATIVE_FROM_POSITIVE);
+         if (m_crossBarDown != Bars) {
+            PrintFormat("[trend.macd] Crossed DOWN at %.4f!", m_signal);
+            m_crossBarDown = Bars;
+         }
       } else {
-         m_trend = TREND_NEGATIVE;
+         setTrendHst(TREND_NEGATIVE);
+         if (m_trendHst.changed == true && 
+             m_trendHst.last == TREND_POSITIVE &&
+             m_crossBarDown != Bars) {
+            m_trend = TREND_NEGATIVE_FROM_POSITIVE;
+            PrintFormat("[trend.macd] (Forced) Crossed DOWN at %.4f!", m_signal);
+            m_crossBarDown = Bars;
+         }
       }
    }
 }

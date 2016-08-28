@@ -23,16 +23,40 @@ enum TRENDS {
    TREND_NEGATIVE_BREAKOUT
 };
 
+struct TrendChange {
+   int last;
+   int current;
+   bool changed;
+};
+
 // TODO: create a class that keeps trend values
 
 class Trend {
    protected:
+      //int m_lastTrend;
       int m_trend;
       string m_trendType;
+      TrendChange m_trendHst;
       
    public:
       Trend() {};
       int getTrend() { return m_trend; };
+      
+      TrendChange getTrendHst() { return m_trendHst; }
+      
+      void setTrendHst(int trend) {
+         m_trend = trend;
+         if (m_trendHst.current == TREND_EMPTY) {
+            m_trendHst.current = trend;
+            m_trendHst.last = trend;
+         } else if (m_trendHst.current != trend) {
+            m_trendHst.last = m_trendHst.current;
+            m_trendHst.current = trend;
+            m_trendHst.changed = true;
+         } else if (m_trendHst.changed) m_trendHst.changed = false;
+      }
+
+      //bool setTrend(int 
       string simplify();
       virtual void calculate() { m_trend = TREND_NEUTRAL; };
       virtual void alert();

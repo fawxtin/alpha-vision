@@ -50,13 +50,26 @@ class Trader {
          m_longPositions.cleanOrders();
          m_shortPositions.cleanOrders();
       }
-            
+      
+      // position helpers
+      double riskAndRewardRatio(double entry, double target, double stopLoss);
+      double riskAndRewardRatioEntry(double riskAndReward, double target, double stopLoss);
+      
       // trader executing orders
       void goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
       void goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
       void closeLongs(string);
       void closeShorts(string);
 };
+
+//// Entry helpers
+double Trader::riskAndRewardRatio(double entry, double target, double stopLoss) {
+   return MathAbs(target - entry) / MathAbs(stopLoss - entry);
+}
+
+double Trader::riskAndRewardRatioEntry(double riskAndReward, double target, double stopLoss) {
+   return (target + stopLoss * riskAndReward) / (riskAndReward + 1);
+}
 
 
 

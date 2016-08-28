@@ -50,19 +50,19 @@ void AlphaVisionTraderPNN::tradeOnTrends() {
    string simplifiedMj = hmaMtMj.simplify();
    string simplifiedMn = hmaMtMn.simplify();
    if (simplifiedMj != simplifiedMn) { // Neutral trend
-      m_signals.setTrendMj(TREND_NEUTRAL);
+      m_signals.setSignalMj(TREND_NEUTRAL);
       tradeNeutralTrend();
    } else if (simplifiedMj == "POSITIVE") { // Positive trend
-      m_signals.setTrendMj(TREND_POSITIVE);
-      signalMj = m_signals.getTrendMj();
+      m_signals.setSignalMj(TREND_POSITIVE);
+      signalMj = m_signals.getSignalMj();
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
          closeShorts();
       }
       tradePositiveTrend();
    } else if (simplifiedMj == "NEGATIVE") { // Negative trend
-      m_signals.setTrendMj(TREND_NEGATIVE);
-      signalMj = m_signals.getTrendMj();
+      m_signals.setSignalMj(TREND_NEGATIVE);
+      signalMj = m_signals.getSignalMj();
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
          closeLongs();

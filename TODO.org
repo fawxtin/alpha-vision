@@ -28,7 +28,7 @@
    Deal with positions and execute entry/exit points.
 
 *** TODO Trader Algorithms
-    DEADLINE: <2016-08-27 sáb>
+    DEADLINE: <2016-09-03 sáb>
     - Trend inclined (use major/current/fast trends)
     - TradingRange Helper! (signals with support&resistance levels)
     - Scalper (using only fast trends)
@@ -39,6 +39,8 @@
 *** TODO Update existing positions
 
 *** TODO Orders Pool?
+
+*** DONE Refactor SignalChange to TrendChange
 
 *** Risk & Reward Optimization
 

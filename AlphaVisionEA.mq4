@@ -15,10 +15,9 @@
 #include <Positions\AlphaVisionTrader.mqh>
 #include <Positions\AlphaVisionTraderSimple.mqh>
 #include <Positions\AlphaVisionTraderPNN.mqh>
-
+#include <Positions\AlphaVisionTraderOrchestra.mqh>
 
 #include <Signals\AlphaVision.mqh>
-
 
 
 ////
@@ -29,7 +28,7 @@ input int iPeriod2 = 50;
 input int iPeriod3 = 200;
 // TODO: input higher time interval than current
 input bool iDebug = True;
-input int iFastTimeFrame = PERIOD_M15;
+input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
@@ -59,7 +58,7 @@ input int iSuperTimeFrame = PERIOD_W1;
 ////
 //// GLOBALS
 ////
-AlphaVisionTraderSimple *gTrader; // Orders maker
+AlphaVisionTraderOrchestra *gTrader; // Orders maker
 SignalTimeFrames gSignalTF;
 
 int gCountMinutes;
@@ -91,7 +90,7 @@ int OnInit() {
 
 
    // loading current positions
-   gTrader = new AlphaVisionTraderSimple(new Positions("LONG", true), new Positions("SHORT", true), avSignals);
+   gTrader = new AlphaVisionTraderOrchestra(new Positions("LONG", true), new Positions("SHORT", true), avSignals);
    gTrader.loadCurrentOrders();
    
    gCountMinutes = 0;
@@ -147,6 +146,8 @@ void OnTick() {
    AlphaVisionSignals *signals = gTrader.getSignals();
 
    signals.calculateOn(gSignalTF.fast);
+   //signals.calculateOn(gSignalTF.current);
+   
    // strategy tester does not call onTimer
    gCountTicks++;
    if (gCountTicks % 35 == 0)

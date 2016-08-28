@@ -14,6 +14,13 @@
  *
  *
  */
+ 
+ enum SSIGNALS {
+   SSIGNAL_EMPTY,
+   SSIGNAL_NEUTRAL,
+   SSIGNAL_POSITIVE,
+   SSIGNAL_NEGATIVE
+ };
 
 struct SignalTimeFrames {
    int super;
@@ -30,30 +37,30 @@ struct SignalChange {
 
 class Signals {
    public:
-      SignalChange m_trendMj;
+      SignalChange m_signalMj;
       //SignalChange m_trendFt;
-      SignalChange m_trendCt;
+      SignalChange m_signalCt;
       //SignalChange m_trendSp;
       
       Signals() {
-         m_trendMj.last = TREND_EMPTY;
-         m_trendMj.current = TREND_EMPTY;
-         m_trendMj.changed = false;
+         m_signalMj.last = TREND_EMPTY;
+         m_signalMj.current = TREND_EMPTY;
+         m_signalMj.changed = false;
          //m_trendFt = TREND_EMPTY;
-         m_trendCt.last = TREND_EMPTY;
-         m_trendCt.current = TREND_EMPTY;
-         m_trendCt.changed = false;
+         m_signalCt.last = TREND_EMPTY;
+         m_signalCt.current = TREND_EMPTY;
+         m_signalCt.changed = false;
          //m_trendSp = TREND_EMPTY;
       }
       
-      SignalChange getTrendMj() { return m_trendMj; }
+      SignalChange getSignalMj() { return m_signalMj; }
       
-      void setTrendMj(int trend) {
-         if (m_trendMj.current != trend) {
-            m_trendMj.last = m_trendMj.current;
-            m_trendMj.current = trend;
-            m_trendMj.changed = true;
-         } else if (m_trendMj.changed) m_trendMj.changed = false;
+      void setSignalMj(int signal) {
+         if (m_signalMj.current != signal) {
+            m_signalMj.last = m_signalMj.current;
+            m_signalMj.current = signal;
+            m_signalMj.changed = true;
+         } else if (m_signalMj.changed) m_signalMj.changed = false;
       }
 
       //SignalChange getTrendFt() { return m_trendFt; }
@@ -67,14 +74,14 @@ class Signals {
       //   } else if (m_trendFt.changed) m_trendFt.changed = false;
       //}
       
-      SignalChange getTrendCt() { return m_trendCt; }
+      SignalChange getSignalCt() { return m_signalCt; }
       
-      void setTrendCt(int trend) {
-         if (m_trendCt.current != trend) {
-            m_trendCt.last = m_trendCt.current;
-            m_trendCt.current = trend;
-            m_trendCt.changed = true;
-         } else if (m_trendCt.changed) m_trendCt.changed = false;
+      void setSignalCt(int signal) {
+         if (m_signalCt.current != signal) {
+            m_signalCt.last = m_signalCt.current;
+            m_signalCt.current = signal;
+            m_signalCt.changed = true;
+         } else if (m_signalCt.changed) m_signalCt.changed = false;
       }
       
       //SignalChange getTrendSp() { return m_trendSp; }

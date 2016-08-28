@@ -39,30 +39,30 @@ class StochasticTrend : public Trend {
 };
 
 void StochasticTrend::calculate(void) {
-   m_main = iStochastic(NULL, m_timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0);
-   m_main_i = iStochastic(NULL, m_timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 1);
-   m_signal = iStochastic(NULL, m_timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0);
-   m_signal_i = iStochastic(NULL, m_timeframe, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 1);
+   m_main = iStochastic(NULL, m_timeframe, m_KPeriod, m_DPeriod, 3, MODE_SMA, 0, MODE_MAIN, 0);
+   m_main_i = iStochastic(NULL, m_timeframe, m_KPeriod, m_DPeriod, 3, MODE_SMA, 0, MODE_MAIN, 1);
+   m_signal = iStochastic(NULL, m_timeframe, m_KPeriod, m_DPeriod, 3, MODE_SMA, 0, MODE_SIGNAL, 0);
+   m_signal_i = iStochastic(NULL, m_timeframe, m_KPeriod, m_DPeriod, 3, MODE_SMA, 0, MODE_SIGNAL, 1);
    
    // TODO: read more about stochastic and the better way to deal with its signals
-   if (m_main >= STOCHASTIC_REGION_OVERBOUGHT) { // overbought region
-      if (m_signal_i > m_main && m_main > m_signal) { // crossing
+   if (m_signal >= STOCHASTIC_REGION_OVERBOUGHT) { // overbought region
+      if (m_main_i > m_signal && m_signal > m_main) { // crossing
          m_trend = TREND_NEGATIVE_FROM_POSITIVE;
-      } else if (m_signal > m_main) {
+      } else if (m_main > m_signal) {
          m_trend = TREND_POSITIVE_OVERBOUGHT;
       } else {
          m_trend = TREND_NEGATIVE;
       }
-   } else if (m_main >= STOCHASTIC_REGION_OVERBOUGHT) { // oversold region
-      if (m_signal_i < m_main && m_main < m_signal) { // crossing
+   } else if (m_signal >= STOCHASTIC_REGION_OVERBOUGHT) { // oversold region
+      if (m_main_i < m_signal && m_signal < m_main) { // crossing
          m_trend = TREND_POSITIVE_FROM_NEGATIVE;
-      } else if (m_signal < m_main) {
+      } else if (m_main < m_signal) {
          m_trend = TREND_NEGATIVE_OVERSOLD;
       } else {
          m_trend = TREND_POSITIVE;
       }   
    } else { // middle, neutral region
-      if (m_signal > m_main) {
+      if (m_main > m_signal) {
          m_trend = TREND_POSITIVE;
       } else {
          m_trend = TREND_NEGATIVE;
