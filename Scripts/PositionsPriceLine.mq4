@@ -40,7 +40,7 @@ void OnStart() {
 
 void parsePositions(Positions *positions, string objName, color objColor) {
    PrintFormat("--- loading %s positions", positions.orderType());
-   positions.loadCurrentOrders(true);
+   positions.loadCurrentOrders(-1);
    if (positions.count() > 0) {
       PositionValue pv = positions.meanPositionValue(true);
       createPriceLine(pv.price, objName, objColor, StringFormat("Size: %.2f", pv.size));

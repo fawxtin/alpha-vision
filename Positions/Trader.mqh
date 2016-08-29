@@ -85,15 +85,17 @@ Positions *Trader::getPositions(string longOrShort, int timeframe) {
    if (longOrShort == "LONG" || longOrShort == "long") {
       Positions *longPs = m_longPositions.hGet(getTimeFrameKey(timeframe));
       if (longPs == NULL) {
-         longPs = new Positions("LONG", true);
-         m_longPositions.hPut(getTimeFrameKey(timeframe), longPs);
+         string tfStr = getTimeFrameKey(timeframe);
+         longPs = new Positions("LONG", tfStr, true);
+         m_longPositions.hPut(tfStr, longPs);
       }
       return longPs;
    } else {
       Positions *shortPs = m_shortPositions.hGet(getTimeFrameKey(timeframe));
       if (shortPs == NULL) {
-         shortPs = new Positions("SHORT", true);
-         m_shortPositions.hPut(getTimeFrameKey(timeframe), shortPs);
+         string tfStr = getTimeFrameKey(timeframe);
+         shortPs = new Positions("SHORT", tfStr, true);
+         m_shortPositions.hPut(tfStr, shortPs);
       }
       return shortPs;
    }
@@ -123,7 +125,7 @@ void Trader::setCurrentBarTraded(string longOrShort, int timeframe) {
    Hash *bar;
    string tfStr = getTimeFrameKey(timeframe);
 
-   if (longOrShort == "long") bar = m_barLong;
+   if (longOrShort == "LONG" || longOrShort == "long") bar = m_barLong;
    else bar = m_barShort;
 
    bar.hPutDatetime(tfStr, TimeCurrent());

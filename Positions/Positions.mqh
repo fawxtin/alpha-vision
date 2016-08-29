@@ -118,11 +118,14 @@ class Positions : public HashValue {
       // # positions attributte
       LList<Position> *m_positions;
       string m_positionType;
+      string m_positionTimeframe;
       int m_lastBar;
 
    public:
-      Positions(string positionType, bool logging=false): m_positionType(positionType), m_lastBar(0), m_logHandleOpen(0), m_logHandleClosed(0) {
+      Positions(string positionType, string timeframe, bool logging=false): m_lastBar(0), m_logHandleOpen(0), m_logHandleClosed(0) {
          m_positions = new LList<Position>();
+         m_positionType = positionType;
+         m_positionTimeframe = timeframe;
          if (logging) enableLogging();
       };
       void ~Positions() {
@@ -263,8 +266,8 @@ void Positions::cleanOrders() { // could be LONG / SHORT
 ////
 
 void Positions::enableLogging(void) {
-   m_logHandleOpen = FileOpen(StringFormat("%s_%s_open.csv", Symbol(), m_positionType), FILE_CSV|FILE_WRITE);
-   m_logHandleClosed = FileOpen(StringFormat("%s_%s_closed.csv", Symbol(), m_positionType), FILE_CSV|FILE_WRITE);
+   m_logHandleOpen = FileOpen(StringFormat("%s_%s_%s_open.csv", Symbol(), m_positionType, m_positionTimeframe), FILE_CSV|FILE_WRITE);
+   m_logHandleClosed = FileOpen(StringFormat("%s_%s_%s_closed.csv", Symbol(), m_positionType, m_positionTimeframe), FILE_CSV|FILE_WRITE);
    if (m_logHandleOpen > 0  && m_logHandleClosed > 0) {
       // header
       FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",
@@ -286,9 +289,11 @@ double Positions::calculateRiskRewardRatio(Position *p) {
 
 void Positions::logOpenPosition(Position *p) {
    double riskRewardRatio = calculateRiskRewardRatio(p);
-   if (m_logHandleOpen > 0)
+   if (m_logHandleOpen > 0) {
       FileWrite(m_logHandleOpen, m_positionType, p.m_entryType, p.m_ticket, p.m_openTS, p.m_size, 
                 p.m_signalPrice, p.m_marketPrice, p.m_target, p.m_stopLoss, riskRewardRatio, p.m_reason);
+      FileFlush(m_logHandleOpen);
+   }
 }
 
 void Positions::logClosedPosition(Position *p, string exitReason) {
@@ -301,6 +306,7 @@ void Positions::logClosedPosition(Position *p, string exitReason) {
       FileWrite(m_logHandleClosed, m_positionType, p.m_entryType, orderType, p.m_ticket, p.m_entryTS,
                 p.m_openTS, p.m_closeTS, p.m_size, p.m_price, p.m_closePrice, p.m_target, p.m_stopLoss, 
                 riskRewardRatio, profitOrLoss, p.m_reason, exitReason);
+      FileFlush(m_logHandleClosed);
    }
 }
 
