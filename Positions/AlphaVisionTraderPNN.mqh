@@ -12,7 +12,7 @@
 
 class AlphaVisionTraderPNN : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderPNN(Positions *longPs, Positions *shortPs, AlphaVisionSignals *signals): AlphaVisionTrader(longPs, shortPs, signals) {}
+      AlphaVisionTraderPNN(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {}
 
       virtual void tradeOnTrends();
       
@@ -57,7 +57,7 @@ void AlphaVisionTraderPNN::tradeOnTrends() {
       signalMj = m_signals.getSignal(stf.major);
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
-         closeShorts();
+         closeShorts(stf.major);
       }
       tradePositiveTrend();
    } else if (simplifiedMj == "NEGATIVE") { // Negative trend
@@ -65,7 +65,7 @@ void AlphaVisionTraderPNN::tradeOnTrends() {
       signalMj = m_signals.getSignal(stf.major);
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
-         closeLongs();
+         closeLongs(stf.major);
       }
       tradeNegativeTrend();
    }
@@ -95,22 +95,22 @@ void AlphaVisionTraderPNN::tradeNeutralTrend() {
    // using current trend
    if (hmaCtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
       //goLong(Ask, bbFt.m_bbTop, 0, "Neutral-market");
-      goBBLong(bbFt, "TNeutral-bb");
-      goLong(hmaCtMj.getMAPeriod2(), bbCt.m_bbTop, 0, "Neutral-hmaMj");
+      //goBBLong(bbFt, "TNeutral-bb");
+      goLong(stf.current, hmaCtMj.getMAPeriod2(), bbCt.m_bbTop, 0, "Neutral-hmaMj");
    } else if (hmaCtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) { // crossing up
       //goLong(Ask, bbFt.m_bbTop, 0, "Neutral-market");
-      goBBLong(bbFt, "TNeutral-bb");
-      goLong(hmaCtMn.getMAPeriod2(), bbCt.m_bbTop, 0, "Neutral-hmaMn");
+      //goBBLong(bbFt, "TNeutral-bb");
+      goLong(stf.current, hmaCtMn.getMAPeriod2(), bbCt.m_bbTop, 0, "Neutral-hmaMn");
    } else if (hmaCtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
       //PrintFormat("[AVT.neutral.short.Mj] hma %.4f / bb %.4f", hmaFtMj.getMAPeriod1(), bbFt.m_bbTop);
       //goShort(Bid, bbFt.m_bbBottom, 0, "Neutral-market");
-      goBBShort(bbFt, "TNeutral-bb");
-      goShort(hmaCtMj.getMAPeriod2(), bbCt.m_bbBottom, 0, "Neutral-hmaMj");
+      //goBBShort(bbFt, "TNeutral-bb");
+      goShort(stf.current, hmaCtMj.getMAPeriod2(), bbCt.m_bbBottom, 0, "Neutral-hmaMj");
    } else if (hmaCtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) { // crossing down
       //PrintFormat("[AVT.neutral.short.Mn] hma %.4f / bb %.4f", hmaFtMn.getMAPeriod1(), bbFt.m_bbTop);
       //goShort(Bid, bbFt.m_bbBottom, 0, "Neutral-market");
-      goBBShort(bbFt, "TNeutral-bb");
-      goShort(hmaCtMn.getMAPeriod2(), bbCt.m_bbBottom, 0, "Neutral-hmaMn");
+      //goBBShort(bbFt, "TNeutral-bb");
+      goShort(stf.current, hmaCtMn.getMAPeriod2(), bbCt.m_bbBottom, 0, "Neutral-hmaMn");
    }
 }
 
@@ -136,13 +136,13 @@ void AlphaVisionTraderPNN::tradePositiveTrend() {
    //}
    
    if (hmaFtMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
-      goBBLong(bbCt, "TPositive-bb", false, bbCt.m_bbTop);
-      goLong(hmaFtMn.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMn");
+      //goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
+      //goBBLong(bbCt, "TPositive-bb", false, bbCt.m_bbTop);
+      goLong(stf.current, hmaFtMn.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMn");
    } else if (hmaFtMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE) {
-      goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
-      goBBLong(bbCt, "TPositive-bb", false, bbCt.m_bbTop);
-      goLong(hmaFtMj.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMj");
+      //goBBLong(bbFt, "TPositive-bb", false, bbCt.m_bbTop);
+      //goBBLong(bbCt, "TPositive-bb", false, bbCt.m_bbTop);
+      goLong(stf.current, hmaFtMj.getMAPeriod2(), bbCt.m_bbTop, 0, "TPositive-hmaMj");
    }
 }
 
@@ -168,12 +168,12 @@ void AlphaVisionTraderPNN::tradeNegativeTrend() {
    //}
 
    if (hmaFtMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
-      goBBShort(bbCt, "TNegative-bb", false, bbCt.m_bbBottom);
-      goShort(hmaFtMn.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMn");
+      //goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
+      //goBBShort(bbCt, "TNegative-bb", false, bbCt.m_bbBottom);
+      goShort(stf.current, hmaFtMn.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMn");
    } else if (hmaFtMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE) {
-      goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
-      goBBShort(bbCt, "TNegative-bb", false, bbCt.m_bbBottom);
-      goShort(hmaFtMj.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMj");
+      //goBBShort(bbFt, "TNegative-bb", false, bbCt.m_bbBottom);
+      //goBBShort(bbCt, "TNegative-bb", false, bbCt.m_bbBottom);
+      goShort(stf.current, hmaFtMj.getMAPeriod2(), bbCt.m_bbBottom, 0, "TPositive-hmaMj");
    }
 }

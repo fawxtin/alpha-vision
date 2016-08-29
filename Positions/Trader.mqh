@@ -26,18 +26,21 @@ struct MktT {
 class Trader {
    protected:
       MktT m_mkt;
-      Positions *m_longPositions;
-      Positions *m_shortPositions;
+      Hash *m_longPositions;
+      Hash *m_shortPositions;
       Hash *m_barLong;
       Hash *m_barShort;
 
       bool isCurrentBarTradedP(string longOrShort, int timeframe);
       void setCurrentBarTraded(string longOrShort, int timeframe);
+      Positions *getPositions(string longOrShort, int timeframe);
+      /// key helper
+      string getTimeFrameKey(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
 
    public:
-      Trader(Positions *longPs, Positions *shortPs) {
-         m_longPositions = longPs;
-         m_shortPositions = shortPs;
+      Trader() {
+         m_longPositions = new Hash(193, true);
+         m_shortPositions = new Hash(193, true);
          m_barLong = new Hash(193, true);
          m_barShort = new Hash(193, true);
          m_mkt.vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
@@ -51,14 +54,20 @@ class Trader {
          delete m_barShort;
       }
       
-      void loadCurrentOrders(bool noMagicMA=false) {
-         m_longPositions.loadCurrentOrders(noMagicMA);
-         m_shortPositions.loadCurrentOrders(noMagicMA);
+      /// positions handlers
+      void loadCurrentOrders(int timeframe) {
+         Positions *longPs = getPositions("LONG", timeframe);
+         Positions *shortPs = getPositions("SHORT", timeframe);
+
+         longPs.loadCurrentOrders(MAGICMA + timeframe);
+         shortPs.loadCurrentOrders(MAGICMA + timeframe);
       }
       
-      void cleanOrders(bool noMagicMA=false) {
-         m_longPositions.cleanOrders();
-         m_shortPositions.cleanOrders();
+      void cleanOrders(int timeframe) {
+         Positions *longPs = getPositions("LONG", timeframe);
+         if (longPs != NULL) longPs.cleanOrders();
+         Positions *shortPs = getPositions("SHORT", timeframe);
+         if (shortPs != NULL) shortPs.cleanOrders();
       }
       
       // position helpers
@@ -66,11 +75,29 @@ class Trader {
       double riskAndRewardRatioEntry(double riskAndReward, double target, double stopLoss);
       
       // trader executing orders
-      void goLong(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
-      void goShort(double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
-      void closeLongs(string);
-      void closeShorts(string);
+      void goLong(int timeframe, double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
+      void goShort(int timeframe, double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
+      void closeLongs(int timeframe, string reason);
+      void closeShorts(int timeframe, string reason);
 };
+
+Positions *Trader::getPositions(string longOrShort, int timeframe) {
+   if (longOrShort == "LONG" || longOrShort == "long") {
+      Positions *longPs = m_longPositions.hGet(getTimeFrameKey(timeframe));
+      if (longPs == NULL) {
+         longPs = new Positions("LONG", true);
+         m_longPositions.hPut(getTimeFrameKey(timeframe), longPs);
+      }
+      return longPs;
+   } else {
+      Positions *shortPs = m_shortPositions.hGet(getTimeFrameKey(timeframe));
+      if (shortPs == NULL) {
+         shortPs = new Positions("SHORT", true);
+         m_shortPositions.hPut(getTimeFrameKey(timeframe), shortPs);
+      }
+      return shortPs;
+   }
+}
 
 //// Entry helpers
 double Trader::riskAndRewardRatio(double entry, double target, double stopLoss) {
@@ -83,7 +110,7 @@ double Trader::riskAndRewardRatioEntry(double riskAndReward, double target, doub
 
 bool Trader::isCurrentBarTradedP(string longOrShort, int timeframe) {
    Hash *bar;
-   string tfStr = EnumToString((ENUM_TIMEFRAMES) timeframe);
+   string tfStr = getTimeFrameKey(timeframe);
 
    if (longOrShort == "long") bar = m_barLong;
    else bar = m_barShort;
@@ -94,7 +121,7 @@ bool Trader::isCurrentBarTradedP(string longOrShort, int timeframe) {
 
 void Trader::setCurrentBarTraded(string longOrShort, int timeframe) {
    Hash *bar;
-   string tfStr = EnumToString((ENUM_TIMEFRAMES) timeframe);
+   string tfStr = getTimeFrameKey(timeframe);
 
    if (longOrShort == "long") bar = m_barLong;
    else bar = m_barShort;
@@ -110,9 +137,10 @@ void Trader::setCurrentBarTraded(string longOrShort, int timeframe) {
  * 
  */
 
-void Trader::goLong(double signalPrice, double targetPrice=0, double stopLoss=0, string reason="") {
-   if (m_longPositions.lastBar() == Bars || m_longPositions.count() >= MAX_POSITIONS) return; // already traded / full
-   //OrderSend
+void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, double stopLoss=0, string reason="") {
+   Positions *longPs = getPositions("LONG", timeframe);
+   if (longPs.count() >= MAX_POSITIONS) return; // full
+
    int ticket;
    double marketPrice = Ask;
    signalPrice = NormalizeDouble(signalPrice, m_mkt.vdigits);
@@ -137,13 +165,14 @@ void Trader::goLong(double signalPrice, double targetPrice=0, double stopLoss=0,
       int check = GetLastError();
       Alert(StringFormat("[Trader.goLong] ERROR opening order: %d / %s", check, ErrorDescription(check)));
    } else {
-      m_longPositions.add(new Position(ticket, orderType, marketPrice, signalPrice));
-      m_longPositions.setLastBar(Bars);
+      longPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
+      //m_longPositions.setLastBar(Bars);
    } 
 }
 
-void Trader::goShort(double signalPrice, double targetPrice=0, double stopLoss=0, string reason="") {
-   if (m_shortPositions.lastBar() == Bars || m_shortPositions.count() >= MAX_POSITIONS) return; // already traded?
+void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, double stopLoss=0, string reason="") {
+   Positions *shortPs = getPositions("SHORT", timeframe);
+   if (shortPs.count() >= MAX_POSITIONS) return; // already traded?
    // short trades
    int ticket;
    double marketPrice = Bid;
@@ -169,79 +198,43 @@ void Trader::goShort(double signalPrice, double targetPrice=0, double stopLoss=0
       int check = GetLastError();
       Alert(StringFormat("[Trader.goShort] ERROR opening order: %d / %s", check, ErrorDescription(check)));
    } else {
-      m_shortPositions.add(new Position(ticket, orderType, marketPrice, signalPrice));
-      m_shortPositions.setLastBar(Bars);
+      shortPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
+      //shortPs.setLastBar(Bars);
    }
 }
 
-void Trader::closeLongs(string reason="") {
+void Trader::closeLongs(int timeframe, string reason="") {
+   Positions *longPs = getPositions("LONG", timeframe);
    double closePrice = Bid;
-   int oCount = m_longPositions.count();
-   PositionValue fullPosition = m_longPositions.meanPositionValue();
+   int oCount = longPs.count();
+   PositionValue fullPosition = longPs.meanPositionValue();
    
-   // Close pending orders not tracked
-   //for (int j = 0; j < OrdersTotal(); j++) {
-   //   if (OrderSelect(j, SELECT_BY_POS, MODE_TRADES)) {
-   //      if ((OrderSymbol() == Symbol()) && (OrderType() == OP_BUYLIMIT) &&
-   //          (OrderMagicNumber() == MAGICMA)) {
-   //         if (OrderDelete(OrderTicket())) {
-   //            PrintFormat("[Trader.closeLongs] Pending long at %.4f closed.", OrderOpenPrice());
-   //            logClosedPosition("long", OrderTicket(), OrderOpenTime(), TimeCurrent(), 
-   //                              OrderLots(), OrderOpenPrice(), OrderOpenPrice(), OrderComment(), StringFormat("%s-pending", reason));
-   //         } else
-   //            PrintFormat("[Trader.closeLongs] Error closing pending long at %.4f closed. (error %d)", OrderOpenPrice(), GetLastError());
-   //      }
-   //   }
-   //}
-
-   /// Close tracked orders
    if (reason != "") PrintFormat("[Trader.closeLongs] Closing %d longs: %s", oCount, reason);
    if (oCount > 0) 
       PrintFormat("[Trader.closeLongs] Closing %d orders (size %.2f) / (long MP %.4f -> sell at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, closePrice);
 
-   while (m_longPositions.count() > 0) {
-      m_longPositions.close(0, closePrice, reason);
+   while (longPs.count() > 0) {
+      longPs.close(0, closePrice, reason);
    }   
 }
 
-void Trader::closeShorts(string reason="") {
-   double closePrice = Ask;
-   int oCount = m_shortPositions.count();
-   PositionValue fullPosition = m_shortPositions.meanPositionValue();
+void Trader::closeShorts(int timeframe, string reason="") {
+   Positions *shortPs = m_shortPositions.hGet(getTimeFrameKey(timeframe));
+   if (shortPs == NULL) return;
    
-   // Close pending orders not tracked
-   //for (int j = 0; j < OrdersTotal(); j++) {
-   //   if (OrderSelect(j, SELECT_BY_POS, MODE_TRADES)) {
-   //      if ((OrderSymbol() == Symbol()) && (OrderType() == OP_SELLLIMIT) &&
-   //          (OrderMagicNumber() == MAGICMA)) {
-   //         if (OrderDelete(OrderTicket())) {
-   //            PrintFormat("[Trader.closeShorts] Pending short at %.4f closed. (error %d)", OrderOpenPrice(), GetLastError());
-   //            logClosedPosition("short", OrderTicket(), OrderOpenTime(), TimeCurrent(), 
-   //                              OrderLots(), OrderOpenPrice(), OrderOpenPrice(), OrderComment(), StringFormat("%s-pending", reason));
-   //         } else
-   //            PrintFormat("[Trader.closeShorts] Error closing pending short at %.4f closed. (error %d)", OrderOpenPrice(), GetLastError());
-   //      }
-   //   }
-   //}
-
+   double closePrice = Ask;
+   int oCount = shortPs.count();
+   PositionValue fullPosition = shortPs.meanPositionValue();
+   
    if (reason != "") PrintFormat("[Trader.closeShorts] Closing %d shorts: %s", oCount, reason);
    if (oCount > 0)
       PrintFormat("[Trader.closeShorts] Closed %d orders (size %.2f) / (sell MP %.4f -> cover at %.4f)",
                   oCount, fullPosition.size, fullPosition.price, closePrice);
    
-   while (m_shortPositions.count() > 0) {
-      m_shortPositions.close(0, closePrice, reason);
+   while (shortPs.count() > 0) {
+      shortPs.close(0, closePrice, reason);
    }
 }
-
-//void debugPrintSignal() {
-//   if (iDebug) {
-//      PrintFormat("[AV.CT.HMA] Major Signal (%d -> %s) / Minor signal (%d -> %s) / [last bar %d/current bar %d]",
-//                  major.getTrend(), major.simplify(), minor.getTrend(), minor.simplify(), positions.lastBar(), Bars);
-//   }
-//}
-
-
 
 #endif

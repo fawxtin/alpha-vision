@@ -78,20 +78,21 @@ int OnInit() {
       return INIT_PARAMETERS_INCORRECT;   
    }
 
+   // loading signals
    AlphaVisionSignals *avSignals = new AlphaVisionSignals(gSignalTF);
-   // load HMA signals
+   avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.calculateOn(gSignalTF.fast);
    avSignals.initOn(gSignalTF.current, iPeriod1, iPeriod2, iPeriod3);
    avSignals.calculateOn(gSignalTF.current);
    avSignals.initOn(gSignalTF.major, iPeriod1, iPeriod2, iPeriod3);
    avSignals.calculateOn(gSignalTF.major);
-   avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
-   avSignals.calculateOn(gSignalTF.fast);
-   // load BB signals
 
 
    // loading current positions
-   gTrader = new AlphaVisionTraderOrchestra(new Positions("LONG", true), new Positions("SHORT", true), avSignals);
-   gTrader.loadCurrentOrders();
+   gTrader = new AlphaVisionTraderOrchestra(avSignals);
+   gTrader.loadCurrentOrders(gSignalTF.fast);
+   gTrader.loadCurrentOrders(gSignalTF.current);
+   gTrader.loadCurrentOrders(gSignalTF.major);
    
    gCountMinutes = 0;
    gCountTicks = 0;
@@ -102,8 +103,14 @@ int OnInit() {
 
 // OnTester - close positions
 double OnTester() {
-   gTrader.closeLongs("End-Of-Test");
-   gTrader.closeShorts("End-Of-Test");
+   gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
+   gTrader.closeLongs(gSignalTF.current, "End-Of-Test");
+   gTrader.closeLongs(gSignalTF.major, "End-Of-Test");
+
+   gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
+   gTrader.closeShorts(gSignalTF.current, "End-Of-Test");
+   gTrader.closeShorts(gSignalTF.major, "End-Of-Test");
+
    return 0;
 }
 
@@ -142,9 +149,12 @@ void OnTick() {
       Print("Too few bars.");
       return;
    }
-   gTrader.cleanOrders(); // remove already closed orders
+   // remove already closed orders
+   gTrader.cleanOrders(gSignalTF.fast);
+   gTrader.cleanOrders(gSignalTF.current);
+   gTrader.cleanOrders(gSignalTF.major);
+   
    AlphaVisionSignals *signals = gTrader.getSignals();
-
    signals.calculateOn(gSignalTF.fast);
    //signals.calculateOn(gSignalTF.current);
    
