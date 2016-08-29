@@ -23,6 +23,8 @@
 ////
 //// INPUTS
 ////
+
+bool iIsTest = true;
 input int iPeriod1 = 20;
 input int iPeriod2 = 50;
 input int iPeriod3 = 200;
@@ -63,6 +65,7 @@ SignalTimeFrames gSignalTF;
 
 int gCountMinutes;
 int gCountTicks;
+
 
 int OnInit() {
    gSignalTF.current = Period();
@@ -156,15 +159,17 @@ void OnTick() {
    
    AlphaVisionSignals *signals = gTrader.getSignals();
    signals.calculateOn(gSignalTF.fast);
-   //signals.calculateOn(gSignalTF.current);
    
-   // strategy tester does not call onTimer
-   gCountTicks++;
-   if (gCountTicks % 35 == 0)
-      signals.calculateOn(gSignalTF.current);
-   else if (gCountTicks >= 300) {
-      gCountTicks = 0;
-      signals.calculateOn(gSignalTF.major);
+   if (iIsTest) {
+      //signals.calculateOn(gSignalTF.current);
+      // strategy tester does not call onTimer
+      gCountTicks++;
+      if (gCountTicks % 35 == 0)
+         signals.calculateOn(gSignalTF.current);
+      else if (gCountTicks >= 300) {
+         gCountTicks = 0;
+         signals.calculateOn(gSignalTF.major);
+      }
    }
    
    gTrader.tradeOnTrends();
