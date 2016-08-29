@@ -58,7 +58,7 @@ void MACDTrend::calculate(void) {
       if (m_main_i < m_signal_i) { // crossing up
          setTrendHst(TREND_POSITIVE_FROM_NEGATIVE);
          if (m_crossBarUp != Bars) {
-            PrintFormat("[trend.macd] Crossed UP at %.4f!", m_signal);
+            //PrintFormat("[trend.macd] Crossed UP at %.4f!", m_signal);
             m_crossBarUp = Bars;
          }
       } else {
@@ -67,7 +67,7 @@ void MACDTrend::calculate(void) {
              m_trendHst.last == TREND_NEGATIVE &&
              m_crossBarUp != Bars) {
             m_trend = TREND_POSITIVE_FROM_NEGATIVE;
-            PrintFormat("[trend.macd] (Forced) Crossed UP at %.4f!", m_signal);
+            //PrintFormat("[trend.macd] (Forced) Crossed UP at %.4f!", m_signal);
             m_crossBarUp = Bars;
          }
       }
@@ -75,7 +75,7 @@ void MACDTrend::calculate(void) {
       if (m_main_i > m_signal_i) { // crossing down
          setTrendHst(TREND_NEGATIVE_FROM_POSITIVE);
          if (m_crossBarDown != Bars) {
-            PrintFormat("[trend.macd] Crossed DOWN at %.4f!", m_signal);
+            //PrintFormat("[trend.macd] Crossed DOWN at %.4f!", m_signal);
             m_crossBarDown = Bars;
          }
       } else {
@@ -84,7 +84,7 @@ void MACDTrend::calculate(void) {
              m_trendHst.last == TREND_POSITIVE &&
              m_crossBarDown != Bars) {
             m_trend = TREND_NEGATIVE_FROM_POSITIVE;
-            PrintFormat("[trend.macd] (Forced) Crossed DOWN at %.4f!", m_signal);
+            //PrintFormat("[trend.macd] (Forced) Crossed DOWN at %.4f!", m_signal);
             m_crossBarDown = Bars;
          }
       }

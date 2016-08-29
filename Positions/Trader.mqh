@@ -8,6 +8,7 @@
 #property strict
 
 #include <stdlib.mqh>
+#include <Arrays\Hash.mqh>
 
 #include <Positions\Positions.mqh>
 
@@ -27,11 +28,18 @@ class Trader {
       MktT m_mkt;
       Positions *m_longPositions;
       Positions *m_shortPositions;
+      Hash *m_barLong;
+      Hash *m_barShort;
+
+      bool isCurrentBarTradedP(string longOrShort, int timeframe);
+      void setCurrentBarTraded(string longOrShort, int timeframe);
 
    public:
       Trader(Positions *longPs, Positions *shortPs) {
          m_longPositions = longPs;
          m_shortPositions = shortPs;
+         m_barLong = new Hash(193, true);
+         m_barShort = new Hash(193, true);
          m_mkt.vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
          m_mkt.vspread = MarketInfo(Symbol(), MODE_SPREAD) / MathPow(10, m_mkt.vdigits);
       }
@@ -39,6 +47,8 @@ class Trader {
       void ~Trader() {
          delete m_longPositions;
          delete m_shortPositions;
+         delete m_barLong;
+         delete m_barShort;
       }
       
       void loadCurrentOrders(bool noMagicMA=false) {
@@ -69,6 +79,27 @@ double Trader::riskAndRewardRatio(double entry, double target, double stopLoss) 
 
 double Trader::riskAndRewardRatioEntry(double riskAndReward, double target, double stopLoss) {
    return (target + stopLoss * riskAndReward) / (riskAndReward + 1);
+}
+
+bool Trader::isCurrentBarTradedP(string longOrShort, int timeframe) {
+   Hash *bar;
+   string tfStr = EnumToString((ENUM_TIMEFRAMES) timeframe);
+
+   if (longOrShort == "long") bar = m_barLong;
+   else bar = m_barShort;
+
+   if ((TimeCurrent() - bar.hGetDatetime(tfStr)) > timeframe) return false;
+   else return true;
+}
+
+void Trader::setCurrentBarTraded(string longOrShort, int timeframe) {
+   Hash *bar;
+   string tfStr = EnumToString((ENUM_TIMEFRAMES) timeframe);
+
+   if (longOrShort == "long") bar = m_barLong;
+   else bar = m_barShort;
+
+   bar.hPutDatetime(tfStr, TimeCurrent());
 }
 
 

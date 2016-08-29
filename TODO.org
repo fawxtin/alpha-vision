@@ -27,7 +27,7 @@
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
-*** TODO Trader Algorithms
+*** Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
     - Trend inclined (use major/current/fast trends)
     - TradingRange Helper! (signals with support&resistance levels)
@@ -36,7 +36,11 @@
     - Orchestra: macd for signals, stochastic for confirmation (overbought/oversold)
       and BB for entry/exit points.
 
-*** TODO Update existing positions
+*** Trader timeframes
+
+**** TODO pass positions to different timeframes handlers
+
+**** TODO Update existing positions
 
 *** TODO Orders Pool?
 

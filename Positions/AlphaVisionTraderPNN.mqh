@@ -46,23 +46,23 @@ void AlphaVisionTraderPNN::tradeOnTrends() {
    AlphaVision *avCt = m_signals.getAlphaVisionOn(stf.current);
    HMATrend *hmaCtMj = avCt.m_hmaMajor;
 
-   SignalChange signalMj;
+   SignalChange *signalMj;
    string simplifiedMj = hmaMtMj.simplify();
    string simplifiedMn = hmaMtMn.simplify();
    if (simplifiedMj != simplifiedMn) { // Neutral trend
-      m_signals.setSignalMj(TREND_NEUTRAL);
+      m_signals.setSignal(stf.major, SSIGNAL_NEUTRAL);
       tradeNeutralTrend();
    } else if (simplifiedMj == "POSITIVE") { // Positive trend
-      m_signals.setSignalMj(TREND_POSITIVE);
-      signalMj = m_signals.getSignalMj();
+      m_signals.setSignal(stf.major, SSIGNAL_POSITIVE);
+      signalMj = m_signals.getSignal(stf.major);
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
          closeShorts();
       }
       tradePositiveTrend();
    } else if (simplifiedMj == "NEGATIVE") { // Negative trend
-      m_signals.setSignalMj(TREND_NEGATIVE);
-      signalMj = m_signals.getSignalMj();
+      m_signals.setSignal(stf.major, SSIGNAL_NEGATIVE);
+      signalMj = m_signals.getSignal(stf.major);
       if (signalMj.changed) {
          Alert(StringFormat("[Trader] Current Timeframe trend changed to: %d", signalMj.current));
          closeLongs();
