@@ -135,7 +135,7 @@ class Positions : public HashValue {
       };
       
       // if magicMask = 0, load all orders from current symbol
-      void loadCurrentOrders(int magicMask);
+      int loadCurrentOrders(int magicMask);
       bool add(Position *position);
       bool close(int idx, double price=0, string reason="");
       void cleanOrders();
@@ -229,7 +229,8 @@ bool Positions::hasMagic(int magicNumber, int magicMask) {
    return res;
 }
 
-void Positions::loadCurrentOrders(int magicMask) { // could be LONG / SHORT   
+int Positions::loadCurrentOrders(int magicMask) { // could be LONG / SHORT
+   int positionsLoaded = 0;
    for (int i = 0; i < OrdersTotal(); i++) {
       if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES) == false) break;
       
@@ -238,12 +239,16 @@ void Positions::loadCurrentOrders(int magicMask) { // could be LONG / SHORT
          if ((m_positionType == "LONG") && 
              (OrderType() == OP_BUY || OrderType() == OP_BUYLIMIT || OrderType() == OP_BUYSTOP)) {
             this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
+            positionsLoaded++;
          } else if ((m_positionType == "SHORT") && 
                     (OrderType() == OP_SELL || OrderType() == OP_SELLLIMIT || OrderType() == OP_SELLSTOP)) {
             this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
+            positionsLoaded++;
          }
       }
    }
+   
+   return positionsLoaded;
 }
 
 void Positions::cleanOrders() { // could be LONG / SHORT

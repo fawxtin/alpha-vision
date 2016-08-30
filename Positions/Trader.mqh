@@ -59,8 +59,10 @@ class Trader {
          Positions *longPs = getPositions("LONG", timeframe);
          Positions *shortPs = getPositions("SHORT", timeframe);
 
-         longPs.loadCurrentOrders(MAGICMA + timeframe);
-         shortPs.loadCurrentOrders(MAGICMA + timeframe);
+         int nLongs = longPs.loadCurrentOrders(MAGICMA + timeframe);
+         PrintFormat("[Trader] On timeframe %s loaded %d longs.", getTimeFrameKey(timeframe), nLongs);
+         int nShorts = shortPs.loadCurrentOrders(MAGICMA + timeframe);
+         PrintFormat("[Trader] On timeframe %s loaded %d shorts.", getTimeFrameKey(timeframe), nShorts);
       }
       
       void cleanOrders(int timeframe) {
