@@ -105,8 +105,8 @@ void AlphaVisionTraderOrchestra::tradeOn(int timeframe) {
 }
 
 void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice) {
-   if (isCurrentBarTradedP("long", timeframe)) return;
-   else setCurrentBarTraded("long", timeframe);
+   if (isBarMarked("long", timeframe)) return;
+   else markBarTraded("long", timeframe);
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
@@ -128,8 +128,8 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice)
 }
 
 void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice) {
-   if (isCurrentBarTradedP("short", timeframe)) return;
-   else setCurrentBarTraded("short", timeframe);
+   if (isBarMarked("short", timeframe)) return;
+   else markBarTraded("short", timeframe);
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
