@@ -114,6 +114,7 @@ double Trader::riskAndRewardRatioEntry(double riskAndReward, double target, doub
 
 bool Trader::isBarMarked(string longOrShort, int timeframe) {
    string tfStr = getTimeFrameKey(timeframe);
+   int timeframeSpace = timeframe * 60; // timeframe is in minutes
    datetime current = TimeCurrent();
    datetime lastTrade;
 
@@ -121,13 +122,13 @@ bool Trader::isBarMarked(string longOrShort, int timeframe) {
    if (longOrShort == "LONG" || longOrShort == "long") lastTrade = m_barLong.hGetDatetime(tfStr);
    else lastTrade = m_barShort.hGetDatetime(tfStr);
 
-   if ((current - lastTrade) <= timeframe) {
-      PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
-                  TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));
+   if ((current - lastTrade) <= timeframeSpace) {
+      //PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
+      //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));
       return true;
    } else {
-      PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
-                  TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));      
+      //PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
+      //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));      
       return false;
    }
 }
