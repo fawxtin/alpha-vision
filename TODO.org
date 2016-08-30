@@ -52,6 +52,7 @@
    Calculate and use Trends to capture signals.
    - SpreadSheet results formula:
      =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
+     =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
 
 *** TODO Elaborate rule of symbols to use on different trade signals
     DEADLINE: <2016-08-28 dom>

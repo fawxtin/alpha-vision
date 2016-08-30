@@ -24,7 +24,7 @@
 //// INPUTS
 ////
 
-bool iIsTest = true;
+bool iIsTest = false;
 input int iPeriod1 = 20;
 input int iPeriod2 = 50;
 input int iPeriod3 = 200;
