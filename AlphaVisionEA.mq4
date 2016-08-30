@@ -24,12 +24,11 @@
 //// INPUTS
 ////
 
-bool iIsTest = false;
+input bool iIsTest = false;
 input int iPeriod1 = 20;
 input int iPeriod2 = 50;
 input int iPeriod3 = 200;
 // TODO: input higher time interval than current
-input bool iDebug = True;
 input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
@@ -136,8 +135,10 @@ void OnTimer() {
 
    if (gCountMinutes % 3 == 0) { // every 3 minutes
       signals.calculateOn(gSignalTF.current);
+      gTrader.tradeSetupOn(gSignalTF.current);
    } else if (gCountMinutes % 15 == 0) { // every 15 minutes
       signals.calculateOn(gSignalTF.major);
+      gTrader.tradeSetupOn(gSignalTF.major);
    } else if (gCountMinutes % 28 == 0) {
       // calculate gAlphaVisionSuper - on weekly   
    }
@@ -159,6 +160,7 @@ void OnTick() {
    
    AlphaVisionSignals *signals = gTrader.getSignals();
    signals.calculateOn(gSignalTF.fast);
+   gTrader.tradeSetupOn(gSignalTF.fast);
    
    if (iIsTest) {
       //signals.calculateOn(gSignalTF.current);
@@ -171,7 +173,5 @@ void OnTick() {
          signals.calculateOn(gSignalTF.major);
       }
    }
-   
-   gTrader.tradeOnTrends();
 }
 

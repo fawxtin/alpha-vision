@@ -40,9 +40,9 @@ void AlphaVisionTraderOrchestra::tradeOnTrends() {
     * 
     *
     */
-   SignalTimeFrames stf = m_signals.getTimeFrames();
-   tradeSetupOn(stf.fast);
-   tradeSetupOn(stf.current);
+   //SignalTimeFrames stf = m_signals.getTimeFrames();
+   //tradeSetupOn(stf.fast);
+   //tradeSetupOn(stf.current);
 }
 
 void AlphaVisionTraderOrchestra::tradeSetupOn(int timeframe) {
