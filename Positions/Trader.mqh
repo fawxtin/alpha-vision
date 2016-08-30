@@ -114,13 +114,22 @@ double Trader::riskAndRewardRatioEntry(double riskAndReward, double target, doub
 
 bool Trader::isBarMarked(string longOrShort, int timeframe) {
    string tfStr = getTimeFrameKey(timeframe);
+   datetime current = TimeCurrent();
    datetime lastTrade;
+
 
    if (longOrShort == "LONG" || longOrShort == "long") lastTrade = m_barLong.hGetDatetime(tfStr);
    else lastTrade = m_barShort.hGetDatetime(tfStr);
 
-   if ((TimeCurrent() - lastTrade) <= timeframe) return true;
-   else return false;
+   if ((current - lastTrade) <= timeframe) {
+      PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
+                  TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));
+      return true;
+   } else {
+      PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
+                  TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));      
+      return false;
+   }
 }
 
 void Trader::markBarTraded(string longOrShort, int timeframe) {

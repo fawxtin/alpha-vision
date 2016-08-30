@@ -18,8 +18,8 @@ input double iFilterEntriesLowerThan = 0;
 //input double iShortMaxPrice = 0;
 
 void OnStart() {
-   Positions *longPositions = new Positions("LONG");
-   Positions *shortPositions = new Positions("SHORT");
+   Positions *longPositions = new Positions("LONG", EnumToString((ENUM_TIMEFRAMES) Period()));
+   Positions *shortPositions = new Positions("SHORT", EnumToString((ENUM_TIMEFRAMES) Period()));
    
    if (iPositions == "LONG&SHORT") {
       parsePositions(longPositions, "LongPositions", clrBlue);
@@ -39,8 +39,8 @@ void OnStart() {
 }
 
 void parsePositions(Positions *positions, string objName, color objColor) {
-   PrintFormat("--- loading %s positions", positions.orderType());
-   positions.loadCurrentOrders(-1);
+   int count = positions.loadCurrentOrders(-1);
+   PrintFormat("--- loading %d %s positions", count, positions.positionType());
    if (positions.count() > 0) {
       PositionValue pv = positions.meanPositionValue(true);
       createPriceLine(pv.price, objName, objColor, StringFormat("Size: %.2f", pv.size));
@@ -56,7 +56,7 @@ void createPriceLine(double price, string objName, color objColor, string objTex
 void changeTargetPrice(Positions *positions, double targetPrice) {
    if (positions.count() > 0) {
       createPriceLine(targetPrice, "TargetPrice", clrWhite);
-      Alert(StringFormat("Modifying %s positions target point to %.4f", positions.orderType(), targetPrice));
+      Alert(StringFormat("Modifying %s positions target point to %.4f", positions.positionType(), targetPrice));
       int ordersModified = 0;
       int ordersFailedTo = 0;
       for (int i = 0; i < positions.count(); i++) {
@@ -77,5 +77,5 @@ void changeTargetPrice(Positions *positions, double targetPrice) {
       }
       Alert(StringFormat("Succes on changing %d positions, and failed on %d positions.", ordersModified, ordersFailedTo));
    } else
-      Alert(StringFormat("%s positions not found", positions.orderType()));
+      Alert(StringFormat("%s positions not found", positions.positionType()));
 }
