@@ -279,8 +279,10 @@ void Positions::enableLogging(void) {
       // header
       FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",
                 "SignalPrice", "MarketPrice", "Target", "StopLoss", "RiskRewardRatio", "Reason");
+      FileFlush(m_logHandleOpen);
       FileWrite(m_logHandleClosed, "Position", "EntryType", "OutType", "Ticket", "EntryTS", "OpenTS", "ExitTS", "Size",
                 "EntryPrice", "ExitPrice", "Target", "StopLoss", "RiskRewardRatio", "PL", "EntryReason", "ExitReason");
+      FileFlush(m_logHandleClosed);
    } else
       PrintFormat("[Trader] error while enabling log: %d", GetLastError());
 }
