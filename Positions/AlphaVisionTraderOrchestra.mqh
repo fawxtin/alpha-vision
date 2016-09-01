@@ -111,8 +111,6 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice)
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
    BBTrend *bb3 = av.m_bb3;
-   //AlphaVision *avFt = m_signals.getAlphaVisionOn(stf.fast);
-   //ATRdelta *atrFt = avFt.m_at
 
    double marketPrice = Ask;
    double limitPrice = bb.m_bbBottom;

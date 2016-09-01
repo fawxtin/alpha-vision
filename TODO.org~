@@ -2,20 +2,65 @@
 
 * Alpha Vision
 
-** Quants Algorithms
-*** Learn through books
-**** Algorithmic Trading
-**** Quantitative Trading and Money Management
-**** Quantitative Trading Strategies
+** Learning Techniques
+*** Ralph Vince - Mathematics for Market
+    DEADLINE: <2016-09-28 qua>
+    Provide a resume on the subject.
 
-** MQL libraries
+*** Quantitative Trading and Money Management
 
-*** Deal with Positions
-    Develop an OO schema to deal with positions Risk&Reward
+** Trends
+   Calculate trends: BB; HMA; ATR; Stochastic; MACD
 
-*** Deal with Trends
-    Develop functions that calculates trends
+*** DONE Enum for Trends
+    DEADLINE: <2016-08-26 sex>
 
-*** DONE Learn to do backtesting
+*** DONE Implement missing indicators on AV
+    DEADLINE: <2016-08-26 sex>
+    - ok ATR
+    - ok Stochastic
+    - ok MACD
+    - RSI?
 
-** 
+*** TODO provide a trend input structure / for each trend type
+
+** Positions/Trader
+   Deal with positions and execute entry/exit points.
+
+*** Trader Algorithms
+    DEADLINE: <2016-09-03 sáb>
+    - Trend inclined (use major/current/fast trends)
+    - TradingRange Helper! (signals with support&resistance levels)
+    - Scalper (using only fast trends)
+    - Swinger (using support&resistence levels / higher targets and stopLosses)
+    - Orchestra: macd for signals, stochastic for confirmation (overbought/oversold)
+      and BB for entry/exit points.
+
+*** Trader timeframes
+
+**** TODO pass positions to different timeframes handlers
+
+**** TODO Update existing positions
+
+*** TODO Orders Pool?
+
+*** DONE Refactor SignalChange to TrendChange
+
+*** Risk & Reward Optimization
+
+** Signals Comparison
+   Calculate and use Trends to capture signals.
+   - SpreadSheet results formula:
+     =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
+     =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
+
+*** TODO Elaborate rule of symbols to use on different trade signals
+    DEADLINE: <2016-08-28 dom>
+
+*** TODO Check/compare different algorithm trade signals
+    Those implemented on Trader Algorithms
+
+** MQL
+
+*** use external DLLs
+*** Flux Signals

@@ -94,7 +94,6 @@ class AlphaVisionSignals : public Signals {
          if (m_hash.hContainsKey(tfKey)) {
             AlphaVision *av = m_hash.hGet(tfKey);
             av.calculate();
-            // TODO: set signals
             return true;
          } else
             return false;

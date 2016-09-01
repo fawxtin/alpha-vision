@@ -122,15 +122,8 @@ bool Trader::isBarMarked(string longOrShort, int timeframe) {
    if (longOrShort == "LONG" || longOrShort == "long") lastTrade = m_barLong.hGetDatetime(tfStr);
    else lastTrade = m_barShort.hGetDatetime(tfStr);
 
-   if ((current - lastTrade) <= timeframeSpace) {
-      //PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
-      //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));
-      return true;
-   } else {
-      //PrintFormat("[Trader] isBarMarked diff: %d (%s / %s)", current - lastTrade,
-      //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(lastTrade, TIME_DATE|TIME_SECONDS));      
-      return false;
-   }
+   if ((current - lastTrade) <= timeframeSpace) return true;
+   else return false;
 }
 
 void Trader::markBarTraded(string longOrShort, int timeframe) {
@@ -174,10 +167,9 @@ void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, dou
    
    if (ticket == -1) {
       int check = GetLastError();
-      Alert(StringFormat("[Trader.goLong] ERROR opening order: %d / %s", check, ErrorDescription(check)));
+      Alert(StringFormat("[Trader.goLong/%s] ERROR opening order (%s): %d / %s", Symbol(), reason, check, ErrorDescription(check)));
    } else {
       longPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
-      //m_longPositions.setLastBar(Bars);
    } 
 }
 
@@ -207,10 +199,9 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
    
    if (ticket == -1) {
       int check = GetLastError();
-      Alert(StringFormat("[Trader.goShort] ERROR opening order: %d / %s", check, ErrorDescription(check)));
+      Alert(StringFormat("[Trader.goShort/%s] ERROR opening order (%s): %d / %s", Symbol(), reason, check, ErrorDescription(check)));
    } else {
       shortPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
-      //shortPs.setLastBar(Bars);
    }
 }
 

@@ -240,14 +240,10 @@ int Positions::loadCurrentOrders(int magicMask) { // could be LONG / SHORT
          
          if ((m_positionType == "LONG") && 
              (OrderType() == OP_BUY || OrderType() == OP_BUYLIMIT || OrderType() == OP_BUYSTOP)) {
-            //PrintFormat("[Positions] order and current time diff: %d (%s / %s)", current - OrderOpenTime(),
-            //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(OrderOpenTime(), TIME_DATE|TIME_SECONDS));
             this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
             positionsLoaded++;
          } else if ((m_positionType == "SHORT") && 
                     (OrderType() == OP_SELL || OrderType() == OP_SELLLIMIT || OrderType() == OP_SELLSTOP)) {
-            //PrintFormat("[Positions] order and current time diff: %d (%s / %s)", current - OrderOpenTime(),
-            //            TimeToStr(current, TIME_DATE|TIME_SECONDS), TimeToStr(OrderOpenTime(), TIME_DATE|TIME_SECONDS));
             this.add(new Position(OrderTicket(), "loaded", OrderOpenPrice(), OrderOpenPrice()));
             positionsLoaded++;
          }

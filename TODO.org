@@ -5,7 +5,7 @@
 ** Learning Techniques
 *** Ralph Vince - Mathematics for Market
     DEADLINE: <2016-09-28 qua>
-    Provide a resume on the subject.
+    Provide a schedule and a resume on the subject.
 
 *** Quantitative Trading and Money Management
 
@@ -27,6 +27,10 @@
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
+*** TODO Log rotate positions csv
+    - create a Log class that can also send email or update spreadsheets
+    - flush file handler (work)
+
 *** Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
     - Trend inclined (use major/current/fast trends)
@@ -42,8 +46,6 @@
 
 **** TODO Update existing positions
 
-*** TODO Orders Pool?
-
 *** DONE Refactor SignalChange to TrendChange
 
 *** Risk & Reward Optimization
@@ -55,7 +57,7 @@
      =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
 
 *** TODO Elaborate rule of symbols to use on different trade signals
-    DEADLINE: <2016-08-28 dom>
+    DEADLINE: <2016-09-07 qua>
 
 *** TODO Check/compare different algorithm trade signals
     Those implemented on Trader Algorithms
