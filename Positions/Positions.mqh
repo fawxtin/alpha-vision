@@ -9,6 +9,8 @@
 
 #include <Arrays\Hash.mqh>
 #include <Arrays\LList.mqh>
+#include <Logging\Logging.mqh>
+
 
 #ifndef __POSITIONS_BASIC__
 #define __POSITIONS_BASIC__ 1
@@ -110,7 +112,9 @@ class Positions : public HashValue {
    /* TODO: deal with an array of positions. */
    private:
       int m_logHandleOpen;
+      Logging *m_logOpenPositions;
       int m_logHandleClosed;
+      Logging *m_logClosedPositions;
       
       bool hasMagic(int magicNumber, int magicMask);
 
@@ -119,19 +123,20 @@ class Positions : public HashValue {
       LList<Position> *m_positions;
       string m_positionType;
       string m_positionTimeframe;
-      int m_lastBar;
 
    public:
-      Positions(string positionType, string timeframe, bool logging=false): m_lastBar(0), m_logHandleOpen(0), m_logHandleClosed(0) {
+      Positions(string positionType, string timeframe, string logDir=""): m_logHandleOpen(0), m_logHandleClosed(0) {
+         m_logOpenPositions = NULL;
+         m_logClosedPositions = NULL;
          m_positions = new LList<Position>();
          m_positionType = positionType;
          m_positionTimeframe = timeframe;
-         if (logging) enableLogging();
+         if (logDir != "") enableLogging(logDir);
       };
       void ~Positions() {
          delete m_positions;
-         if (m_logHandleOpen > 0) FileClose(m_logHandleOpen);
-         if (m_logHandleClosed > 0) FileClose(m_logHandleClosed);
+         delete m_logOpenPositions;
+         delete m_logClosedPositions;
       };
       
       // if magicMask = 0, load all orders from current symbol
@@ -141,18 +146,7 @@ class Positions : public HashValue {
       void cleanOrders();
       int count() { return m_positions.length(); }
       string positionType() { return m_positionType; }
-      
-      int lastBar() { return m_lastBar; }
-      void setLastBar(int bar) { m_lastBar = bar; }
-      
-      bool isLastBarP(int barN) {
-         if (barN > m_lastBar) {
-            m_lastBar = barN;
-            return true;
-         }
-         return false;
-      }
-      
+            
       Position *operator[](int index) {
          if (index < 0 || index >= m_positions.length())
             return NULL;
@@ -180,7 +174,7 @@ class Positions : public HashValue {
       };
       
       // Logging
-      void enableLogging();
+      void enableLogging(string logDir);
       double calculateRiskRewardRatio(Position *p);
       void logOpenPosition(Position *p);
       void logClosedPosition(Position *p, string exitReason);
@@ -199,7 +193,6 @@ bool Positions::add(Position *position) {
       Print("[Positions.add]");
       position.print();
       m_positions.add(position);
-      this.isLastBarP(position.barOnOpen());
       if (m_logHandleOpen > 0) logOpenPosition(position);
 
       return true;
@@ -272,9 +265,15 @@ void Positions::cleanOrders() { // could be LONG / SHORT
 //// Logging part
 ////
 
-void Positions::enableLogging(void) {
-   m_logHandleOpen = FileOpen(StringFormat("%s_%s_%s_open.csv", Symbol(), m_positionType, m_positionTimeframe), FILE_CSV|FILE_WRITE);
-   m_logHandleClosed = FileOpen(StringFormat("%s_%s_%s_closed.csv", Symbol(), m_positionType, m_positionTimeframe), FILE_CSV|FILE_WRITE);
+void Positions::enableLogging(string logDir) {
+   m_logOpenPositions = new Logging(logDir, StringFormat("%s_%s_open.csv", m_positionType, m_positionTimeframe));
+   m_logClosedPositions = new Logging(logDir, StringFormat("%s_%s_closed.csv", m_positionType, m_positionTimeframe));
+
+   if (m_logOpenPositions != NULL && m_logClosedPositions != NULL) {
+      m_logHandleOpen = m_logOpenPositions.getHandler();
+      m_logHandleClosed = m_logClosedPositions.getHandler();
+   }
+
    if (m_logHandleOpen > 0  && m_logHandleClosed > 0) {
       // header
       FileWrite(m_logHandleOpen, "Position", "EntryType", "Ticket", "Timestamp", "Size",

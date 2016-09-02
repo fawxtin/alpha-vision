@@ -9,6 +9,7 @@
 
 #include <stdlib.mqh>
 #include <Arrays\Hash.mqh>
+#include <Logging\Logging.mqh>
 
 #include <Positions\Positions.mqh>
 
@@ -30,6 +31,7 @@ class Trader {
       Hash *m_shortPositions;
       Hash *m_barLong;
       Hash *m_barShort;
+      string m_logDir;
 
       bool isBarMarked(string longOrShort, int timeframe);
       void markBarTraded(string longOrShort, int timeframe);
@@ -45,6 +47,7 @@ class Trader {
          m_barShort = new Hash(193, true);
          m_mkt.vdigits = (int)MarketInfo(Symbol(), MODE_DIGITS);
          m_mkt.vspread = MarketInfo(Symbol(), MODE_SPREAD) / MathPow(10, m_mkt.vdigits);
+         m_logDir = Logging::nextLogDir(Symbol());
       }
       
       void ~Trader() {
@@ -88,7 +91,7 @@ Positions *Trader::getPositions(string longOrShort, int timeframe) {
       Positions *longPs = m_longPositions.hGet(getTimeFrameKey(timeframe));
       if (longPs == NULL) {
          string tfStr = getTimeFrameKey(timeframe);
-         longPs = new Positions("LONG", tfStr, true);
+         longPs = new Positions("LONG", tfStr, m_logDir);
          m_longPositions.hPut(tfStr, longPs);
       }
       return longPs;
@@ -96,7 +99,7 @@ Positions *Trader::getPositions(string longOrShort, int timeframe) {
       Positions *shortPs = m_shortPositions.hGet(getTimeFrameKey(timeframe));
       if (shortPs == NULL) {
          string tfStr = getTimeFrameKey(timeframe);
-         shortPs = new Positions("SHORT", tfStr, true);
+         shortPs = new Positions("SHORT", tfStr, m_logDir);
          m_shortPositions.hPut(tfStr, shortPs);
       }
       return shortPs;
