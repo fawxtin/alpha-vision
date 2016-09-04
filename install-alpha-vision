@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+MT4_DIR="${HOME}/.wine/drive_c/Program Files (x86)/MetaTrader 4/MQL4"
+
+## 3rd part libraries
+cp CustomIndicators/*.mq4 "${MT4_DIR}/Indicators/"
+cp Arrays/*.mqh "${MT4_DIR}/Include/Arrays/"
+
+## EA and Scripts
+cp *EA.mq4 "${MT4_DIR}/Experts/"
+cp Scripts/*.mq4 "${MT4_DIR}/Scripts/"
+
+## AV libraries
+[ ! -e "${MT4_DIR}/Include/Logging/" ] && mkdir "${MT4_DIR}/Include/Logging/"
+cp Logging/*.mqh "${MT4_DIR}/Include/Logging/"
+
+[ ! -e "${MT4_DIR}/Include/Positions/" ] && mkdir "${MT4_DIR}/Include/Positions/"
+cp Positions/*.mqh "${MT4_DIR}/Include/Positions/"
+
+[ ! -e "${MT4_DIR}/Include/Signals/" ] && mkdir "${MT4_DIR}/Include/Signals/"
+cp Signals/*.mqh "${MT4_DIR}/Include/Signals/"
+
+[ ! -e "${MT4_DIR}/Include/Trends/" ] && mkdir "${MT4_DIR}/Include/Trends/"
+cp Trends/*.mqh "${MT4_DIR}/Include/Trends/"
+
+
