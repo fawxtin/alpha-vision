@@ -32,15 +32,18 @@ class AlphaVision : public HashValue {
       BBTrend *m_bb3;
       StochasticTrend *m_stoch;
       MACDTrend *m_macd;
-      
+      ATRdelta *m_atr;
+          
    
-      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3, StochasticTrend *stoch, MACDTrend *macd) {
+      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3, 
+                  StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
          m_hmaMajor = major;
          m_hmaMinor = minor;
          m_bb = bb;
          m_bb3 = bb3;
          m_stoch = stoch;
          m_macd = macd;
+         m_atr = atr;
       }
 
       void ~AlphaVision() {
@@ -50,6 +53,7 @@ class AlphaVision : public HashValue {
          delete m_bb3;
          delete m_stoch;
          delete m_macd;
+         delete m_atr;
       }
       
       void calculate() {
@@ -59,6 +63,7 @@ class AlphaVision : public HashValue {
          m_bb3.calculate();
          m_stoch.calculate();
          m_macd.calculate();
+         m_atr.calculate();
       }
 };
 
@@ -66,14 +71,11 @@ class AlphaVisionSignals : public Signals {
    protected:
       string getKey(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
       Hash *m_hash;
-      SignalTimeFrames m_timeframes;
       
    public:
-      AlphaVisionSignals() { m_hash = new Hash(193, true); }
-      AlphaVisionSignals(SignalTimeFrames &tfs) { m_hash = new Hash(193, true); m_timeframes = tfs; }
+      AlphaVisionSignals(SignalTimeFrames &tfs) : Signals(tfs) { m_hash = new Hash(193, true); }
       void ~AlphaVisionSignals() { delete m_hash; }
       
-      SignalTimeFrames getTimeFrames() { return m_timeframes; }
       // TODO: from different passed config structures (HMA, ATR, BB, ...), could get different stuff
       bool initOn(int timeframe, int period1, int period2, int period3) {
          string tfKey = getKey(timeframe);
@@ -83,7 +85,8 @@ class AlphaVisionSignals : public Signals {
                                                new BBTrend(timeframe),
                                                new BBTrend(timeframe, 3.0),
                                                new StochasticTrend(timeframe),
-                                               new MACDTrend(timeframe)));
+                                               new MACDTrend(timeframe),
+                                               new ATRdelta(timeframe, 14, 80)));
             return true;
          }
          else return false;

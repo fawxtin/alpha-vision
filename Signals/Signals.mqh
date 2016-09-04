@@ -42,15 +42,19 @@ class SignalChange : public HashValue {
 class Signals {
    public:
       Hash *m_signalHst;
+      SignalTimeFrames m_timeframes;
       
-      Signals() {
+      Signals(SignalTimeFrames &tfs) {
          m_signalHst = new Hash(193, true);
+         m_timeframes = tfs;
       }
       void ~Signals() {
          delete m_signalHst;
       }
       
       string getTimeframeStr(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
+      
+      SignalTimeFrames getTimeFrames() { return m_timeframes; }
       
       SignalChange *getSignal(int timeframe) { return m_signalHst.hGet(getTimeframeStr(timeframe)); }
       

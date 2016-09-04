@@ -135,10 +135,10 @@ void OnTimer() {
 
    if (gCountMinutes % 3 == 0) { // every 3 minutes
       signals.calculateOn(gSignalTF.current);
-      gTrader.tradeSetupOn(gSignalTF.current);
+      gTrader.onTrendSetup(gSignalTF.current);
    } else if (gCountMinutes % 15 == 0) { // every 15 minutes
       signals.calculateOn(gSignalTF.major);
-      gTrader.tradeSetupOn(gSignalTF.major);
+      gTrader.onTrendSetup(gSignalTF.major);
    } else if (gCountMinutes % 28 == 0) {
       // calculate gAlphaVisionSuper - on weekly   
    }
@@ -160,17 +160,19 @@ void OnTick() {
    
    AlphaVisionSignals *signals = gTrader.getSignals();
    signals.calculateOn(gSignalTF.fast);
-   gTrader.tradeSetupOn(gSignalTF.fast);
+   gTrader.onTrendSetup(gSignalTF.fast);
    
    if (iIsTest) {
       //signals.calculateOn(gSignalTF.current);
       // strategy tester does not call onTimer
       gCountTicks++;
-      if (gCountTicks % 35 == 0)
+      if (gCountTicks % 35 == 0) {
          signals.calculateOn(gSignalTF.current);
-      else if (gCountTicks >= 300) {
+         gTrader.onTrendSetup(gSignalTF.current);
+      } else if (gCountTicks >= 300) {
          gCountTicks = 0;
          signals.calculateOn(gSignalTF.major);
+         gTrader.onTrendSetup(gSignalTF.major);
       }
    }
 }

@@ -4,16 +4,16 @@
 MT4_DIR="${HOME}/.wine/drive_c/Program Files (x86)/MetaTrader 4/MQL4"
 
 ## 3rd part libraries
-cp Arrays/LList.mqh "${MT4_DIR}/Include/Arrays/"
+cp "${MT4_DIR}/Include/Arrays/LList.mqh" Arrays/
 
 ## EA and Scripts
-cp "${MT4_DIR}/Experts/" AlphaVisionEA.mq4 
+cp "${MT4_DIR}/Experts/"*EA.mq4 AlphaVisionEA.mq4 
 #cp "${MT4_DIR}/Scripts/*.mq4" Scripts/
 
 ## AV libraries
-cp "${MT4_DIR}/Include/Logging/*" Logging/ 
-cp "${MT4_DIR}/Include/Positions/*.mqh" Positions/
-cp "${MT4_DIR}/Include/Signals/*.mqh" Signals/ 
-cp "${MT4_DIR}/Include/Trends/*.mqh" Trends/ 
+cp "${MT4_DIR}/Include/Logging/"* Logging/ 
+cp "${MT4_DIR}/Include/Positions/"*.mqh Positions/
+cp "${MT4_DIR}/Include/Signals/"*.mqh Signals/ 
+cp "${MT4_DIR}/Include/Trends/"*.mqh Trends/ 
 
-
+#find . -type f -not -path "./*" -exec dos2unix {} \;

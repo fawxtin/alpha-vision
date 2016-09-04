@@ -27,13 +27,13 @@ class AlphaVisionTrader : public Trader {
       AlphaVisionSignals *getSignals() { return m_signals; }
 
       // trader executing signals
-      virtual void tradeOnTrends() {}
+      virtual void onTrendSetup(int timeframe) {}
+      virtual void onSignalTrade(int timeframe) {}
+      virtual void onSignalValidation(int timeframe) {}
+      virtual void checkVolatility(int timeframe) {}
+      virtual void onScalpTrade(int timeframe) {}
+      virtual void onBreakoutTrade(int timeframe) {}
 };
 
-
-double getTarget(double target, double nDefault) {
-   if (target == 0) return nDefault;
-   else return target;
-}
 
 #endif

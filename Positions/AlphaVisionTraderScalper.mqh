@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                   AlphaVisionTraderOrchestra.mqh |
-//|                                                          fawxtin |
+//|                                     AlphaVisionTraderScalper.mqh |
+//|                        Copyright 2016, MetaQuotes Software Corp. |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
-#property copyright "fawxtin"
+#property copyright "Copyright 2016, MetaQuotes Software Corp."
 #property link      "https://www.mql5.com"
 #property strict
 
@@ -13,23 +13,22 @@
 #define STOCH_OVERBOUGHT_THRESHOLD 65
 #define MIN_RISK_AND_REWARD_RATIO 2
 
-class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
-   private:
-      int m_barDebug;
-
+class AlphaVisionTraderScalper : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {
-         m_barDebug = 0;
-      }
+      AlphaVisionTraderScalper(AlphaVisionSignals *signals): AlphaVisionTrader(signals) { }
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
-      void orchestraBuy(int timeframe, double signalPrice);
-      void orchestraSell(int timeframe, double signalPrice);
+      virtual void onSignalValidation(int timeframe) {}
+      virtual void checkVolatility(int timeframe) {}
+      virtual void onScalpTrade(int timeframe) {}
+      virtual void onBreakoutTrade(int timeframe) {}
+      void scalperBuy(int timeframe, double signalPrice);
+      void scalperSell(int timeframe, double signalPrice);
 
 };
 
-void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
+void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    HMATrend *hmaMj = av.m_hmaMajor;
    HMATrend *hmaMn = av.m_hmaMinor;
@@ -65,7 +64,7 @@ void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
    }
 }
 
-void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
+void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    HMATrend *hmaMj = av.m_hmaMajor;
    HMATrend *hmaMn = av.m_hmaMinor;
@@ -75,20 +74,20 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    // using fast trend signals and current trend BB positioning
    if (hmaMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, hmaMj.getMAPeriod2());
+      scalperBuy(timeframe, hmaMj.getMAPeriod2());
    } else if (hmaMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
               stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, hmaMn.getMAPeriod2());
+      scalperBuy(timeframe, hmaMn.getMAPeriod2());
    } else if (hmaMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, hmaMj.getMAPeriod2());
+      scalperSell(timeframe, hmaMj.getMAPeriod2());
    } else if (hmaMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, hmaMn.getMAPeriod2());
+      scalperSell(timeframe, hmaMn.getMAPeriod2());
    }
 }
 
-void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice) {
+void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice) {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
@@ -109,7 +108,7 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice)
    goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-limit[%d]", timeframe));
 }
 
-void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice) {
+void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice) {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 
