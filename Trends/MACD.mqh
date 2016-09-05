@@ -49,9 +49,9 @@ class MACDTrend : public Trend {
 
 void MACDTrend::calculate(void) {
    m_main = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
-   m_main_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 0);
+   m_main_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_MAIN, 1);
    m_signal = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_SIGNAL, 0);
-   m_signal_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_SIGNAL, 0);
+   m_signal_i = iMACD(NULL, m_timeframe, m_pFast, m_pSlow, m_pSma, PRICE_CLOSE, MODE_SIGNAL, 1);
    
    // TODO: read more about macd and the better way to deal with its signals
    if (m_main >= m_signal) { // positive region

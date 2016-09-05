@@ -46,9 +46,11 @@ class ATRdelta : public Trend {
          
          // set volatility states: 
          // TREND_VOLATILITY_LOW; TREND_VOLATILITY_HIGH; TREND_VOLATILITY_LOW_TO_HIGH
-         if (m_atr1 > m_atr2) { // low volatility
+         if (m_atr1 <= m_atr2) { // low volatility
             m_trend = TREND_VOLATILITY_LOW;
+            //PrintFormat("[debug] %d / %d (P1 %.4f, %.4f) / (P2 %.4f, %.4f)", Bars, m_timeframe, m_atr1_i, m_atr1, m_atr2_i, m_atr2);
          } else {
+            //PrintFormat("[debug] %d / %d (P1 %.4f, %.4f) / (P2 %.4f, %.4f)", Bars, m_timeframe, m_atr1_i, m_atr1, m_atr2_i, m_atr2);
             double atrDiff = (m_atr1 - m_atr2) / m_atr2;
             if (atrDiff * 100 > VOLATILITY_DELAY) {
                double atrDiff_i = (m_atr1_i - m_atr2_i) / m_atr2_i;

@@ -9,9 +9,9 @@
 
 #include <Positions\AlphaVisionTrader.mqh>
 
-#define STOCH_OVERSOLD_THRESHOLD 35
-#define STOCH_OVERBOUGHT_THRESHOLD 65
-#define MIN_RISK_AND_REWARD_RATIO 2
+#define STOCH_OVERSOLD_THRESHOLD 40
+#define STOCH_OVERBOUGHT_THRESHOLD 60
+#define MIN_RISK_AND_REWARD_RATIO 1.55
 
 class AlphaVisionTraderScalper : public AlphaVisionTrader {
    public:
@@ -20,11 +20,11 @@ class AlphaVisionTraderScalper : public AlphaVisionTrader {
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
       virtual void onSignalValidation(int timeframe) {}
-      virtual void checkVolatility(int timeframe) {}
-      virtual void onScalpTrade(int timeframe) {}
+      virtual void checkVolatility(int timeframe);
+      virtual void onScalpTrade(int timeframe);
       virtual void onBreakoutTrade(int timeframe) {}
-      void scalperBuy(int timeframe, double signalPrice);
-      void scalperSell(int timeframe, double signalPrice);
+      void scalperBuy(int timeframe, double signalPrice, string signalOrigin="");
+      void scalperSell(int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
@@ -33,6 +33,7 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    HMATrend *hmaMj = av.m_hmaMajor;
    HMATrend *hmaMn = av.m_hmaMinor;
    StochasticTrend *stoch = av.m_stoch;
+   ATRdelta *atr = av.m_atr;
 
    SignalChange *signal;
    string simplifiedMj = hmaMj.simplify();
@@ -41,22 +42,22 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
       m_signals.setSignal(timeframe, SSIGNAL_NEUTRAL);
       signal = m_signals.getSignal(timeframe);
       onSignalTrade(timeframe);
-   } else if (simplifiedMj == "POSITIVE") { // Positive trend
+   } else if (simplifiedMj == "POSITIVE") { // Positive trend - only buy
       m_signals.setSignal(timeframe, SSIGNAL_POSITIVE);
       signal = m_signals.getSignal(timeframe);
       if (signal.changed) {
-         Alert(StringFormat("[Trader/%s] %s signal changed to: %s", Symbol(),
-                            m_signals.getTimeframeStr(timeframe), EnumToString((SSIGNALS) signal.current)));
+         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe),
+                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
          if (stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive[%d]", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
       onSignalTrade(timeframe);
-   } else if (simplifiedMj == "NEGATIVE") { // Negative trend
+   } else if (simplifiedMj == "NEGATIVE") { // Negative trend - only sell
       m_signals.setSignal(timeframe, SSIGNAL_NEGATIVE);
       signal = m_signals.getSignal(timeframe);
       if (signal.changed) {
-         Alert(StringFormat("[Trader/%s] %s signal changed to: %s", Symbol(),
-                            m_signals.getTimeframeStr(timeframe), EnumToString((SSIGNALS) signal.current)));
+         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe), 
+                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
          if (stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative[%d]", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
@@ -64,30 +65,48 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    }
 }
 
+//void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
+//   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
+//   ATRdelta *atr = av.m_atr;
+//
+//   if (atr.getTrend() == TREND_VOLATILITY_LOW) onScalpTrade(timeframe); 
+//}
+
 void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    HMATrend *hmaMj = av.m_hmaMajor;
    HMATrend *hmaMn = av.m_hmaMinor;
-   // TODO: use 2 stochs? a) on default , and b) default on fast timeframe or faster one
+   MACDTrend *macd = av.m_macd;
    StochasticTrend *stoch = av.m_stoch;
+   ATRdelta *atr = av.m_atr;
+   BBTrend *bb = av.m_bb;
 
+   // scalper not trading on high volatility
+   if (atr.getTrend() == TREND_VOLATILITY_HIGH || atr.getTrend() == TREND_VOLATILITY_LOW_TO_HIGH) return;
+   
    // using fast trend signals and current trend BB positioning
    if (hmaMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      scalperBuy(timeframe, hmaMj.getMAPeriod2());
+      scalperBuy(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
    } else if (hmaMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
               stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      scalperBuy(timeframe, hmaMn.getMAPeriod2());
+      scalperBuy(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
+   } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE && // crossing up
+              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+      scalperBuy(timeframe, Ask, "macd");
    } else if (hmaMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      scalperSell(timeframe, hmaMj.getMAPeriod2());
+      scalperSell(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
    } else if (hmaMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      scalperSell(timeframe, hmaMn.getMAPeriod2());
+      scalperSell(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
+   } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE && // crossing up
+              stoch.m_signal >= STOCH_OVERSOLD_THRESHOLD) {
+      scalperSell(timeframe, Bid, "macd");
    }
 }
 
-void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice) {
+void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
@@ -96,19 +115,30 @@ void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice) {
    BBTrend *bb3 = av.m_bb3;
 
    double marketPrice = Ask;
-   double limitPrice = bb.m_bbBottom;
-   double target = bb.m_bbTop;
-   double stopLoss = bb3.m_bbBottom - m_mkt.vspread;
+   double limitPrice;
+   double target;
+   double stopLoss;
+   
+   if (bb.simplify() == "POSITIVE") {
+      limitPrice = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
+      target = bb.m_bbTop;
+      stopLoss = bb.m_bbBottom - (m_mkt.vspread * 2);
+   } else { // Negative
+      limitPrice = bb.m_bbBottom;
+      target = (bb.m_bbMiddle + bb.m_bbTop) / 2;
+      stopLoss = bb3.m_bbBottom - (m_mkt.vspread * 2);      
+   }
+   
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-market[%d]", timeframe));
+      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP/%s-market[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-rr2[%d]", timeframe));
+      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP/%s-rr[%d]", signalOrigin, timeframe));
    }
-   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-limit[%d]", timeframe));
+   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP/%s-limit[%d]", signalOrigin, timeframe));
 }
 
-void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice) {
+void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 
@@ -120,11 +150,22 @@ void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice) {
    double limitPrice = bb.m_bbTop;
    double target = bb.m_bbBottom;
    double stopLoss = bb3.m_bbTop + m_mkt.vspread;
+
+   if (bb.simplify() == "POSITIVE") {
+      limitPrice = bb.m_bbTop;
+      target = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
+      stopLoss = bb3.m_bbTop + (m_mkt.vspread * 2);      
+   } else if (bb.simplify() == "NEGATIVE") {
+      limitPrice = (bb.m_bbMiddle + bb.m_bbTop) / 2;
+      target = bb.m_bbBottom;
+      stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);
+   }
+
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-market[%d]", timeframe));
+      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP/%s-market[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-rr2[%d]", timeframe));
+      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP/%s-rr[%d]", signalOrigin, timeframe));
    }
-   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-limit[%d]", timeframe));
+   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP/%s-limit[%d]", signalOrigin, timeframe));
 }

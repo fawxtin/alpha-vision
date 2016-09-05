@@ -56,6 +56,19 @@ class Signals {
       
       SignalTimeFrames getTimeFrames() { return m_timeframes; }
       
+      int getTimeFrameAbove(int timeframe) {
+         if (timeframe < m_timeframes.fast) {
+            return m_timeframes.fast;
+         } else if (timeframe < m_timeframes.current) {
+            return m_timeframes.current;
+         } else if (timeframe < m_timeframes.major) {
+            return m_timeframes.major;
+         } else if (timeframe < m_timeframes.super) {
+            return m_timeframes.super;
+         } else
+            return PERIOD_MN1;
+      }
+      
       SignalChange *getSignal(int timeframe) { return m_signalHst.hGet(getTimeframeStr(timeframe)); }
       
       void setSignal(int timeframe, int signal) {
