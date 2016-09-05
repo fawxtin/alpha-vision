@@ -7,7 +7,7 @@ MT4_DIR="${HOME}/.wine/drive_c/Program Files (x86)/MetaTrader 4/MQL4"
 cp "${MT4_DIR}/Include/Arrays/LList.mqh" Arrays/
 
 ## EA and Scripts
-cp "${MT4_DIR}/Experts/"AlphaVision*EA.mq4 ./
+cp "${MT4_DIR}/Experts/"AVEA*.mq4 ./
 #cp "${MT4_DIR}/Scripts/*.mq4" Scripts/
 
 ## AV libraries

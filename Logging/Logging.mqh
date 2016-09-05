@@ -37,29 +37,33 @@ class Logging {
 void Logging::checkFolder(string folder) {
    // check folders in symbol
    if (!FileIsExist(folder)) {
-      if (GetLastError() != 5019) { // 5019 -> file is already a directory
+      int error = GetLastError();
+      if (error != 5019) { // 5019 -> file is already a directory
          PrintFormat("[debug] creating folder: %s", folder);
          FolderCreate(folder);
       } else
-         PrintFormat("[debug] some other error occurred on trying to create folder: %s", folder);
+         PrintFormat("[debug] folder already exists: %s", folder);
    } else
-      PrintFormat("[debug] folder already exists: %s", folder);
+      PrintFormat("[debug] error, folder is already a common file: %s", folder);
 }
 
 string Logging::findLogDir(string dirSearch) {
+   string lastDir = "";
    string curDir = "";
    bool searchContinuesP = true;
 
-   long searchHandler = FileFindFirst(StringFormat("%s\\*", dirSearch), curDir);   
+   long searchHandler = FileFindFirst(StringFormat("%s\\*", dirSearch), lastDir);   
    if (searchHandler == INVALID_HANDLE) searchContinuesP = false;
-   while (searchContinuesP) searchContinuesP = FileFindNext(searchHandler, curDir);
+   while (searchContinuesP) {
+      searchContinuesP = FileFindNext(searchHandler, curDir);
+      if (curDir > lastDir) lastDir = curDir;
+   }
    FileFindClose(searchHandler);
    
-   if (curDir == "") {
+   if (lastDir == "") {
       return StringFormat("%s\\%03d", dirSearch, 1);
    } else {
-      string lastDir = StringSubstr(curDir, 0, StringLen(curDir) - 1);
-      return StringFormat("%s\\%03d", dirSearch, StringToInteger(lastDir) + 1);
+      return StringFormat("%s\\%03d", dirSearch, StringToInteger(StringSubstr(lastDir, 0, StringLen(lastDir) - 1)) + 1);
    }
 }
 

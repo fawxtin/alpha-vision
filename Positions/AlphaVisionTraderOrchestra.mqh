@@ -110,7 +110,7 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice,
       goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%]", signalOrigin, timeframe));
+      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%d]", signalOrigin, timeframe));
    }
    goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt[%d]", signalOrigin, timeframe));
 }
