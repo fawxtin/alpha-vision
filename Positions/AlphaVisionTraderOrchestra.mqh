@@ -24,8 +24,8 @@ class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
-      void orchestraBuy(int timeframe, double signalPrice);
-      void orchestraSell(int timeframe, double signalPrice);
+      void orchestraBuy(int timeframe, double signalPrice, string signalOrigin="");
+      void orchestraSell(int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
@@ -69,26 +69,32 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    HMATrend *hmaMj = av.m_hmaMajor;
    HMATrend *hmaMn = av.m_hmaMinor;
-   // TODO: use 2 stochs? a) on default , and b) default on fast timeframe or faster one
    StochasticTrend *stoch = av.m_stoch;
+   MACDTrend *macd = av.m_macd;
 
    // using fast trend signals and current trend BB positioning
    if (hmaMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, hmaMj.getMAPeriod2());
+      orchestraBuy(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
    } else if (hmaMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
               stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, hmaMn.getMAPeriod2());
+      orchestraBuy(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
+   } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
+              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing up
+      orchestraBuy(timeframe, hmaMn.getMAPeriod1(), "macd");
    } else if (hmaMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, hmaMj.getMAPeriod2());
+      orchestraSell(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
    } else if (hmaMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, hmaMn.getMAPeriod2());
+      orchestraSell(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
+   } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
+              stoch.m_signal >= STOCH_OVERSOLD_THRESHOLD) { // crossing down
+      orchestraSell(timeframe, hmaMn.getMAPeriod1(), "macd");
    }
 }
 
-void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice) {
+void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
@@ -101,15 +107,15 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice)
    double target = bb.m_bbTop;
    double stopLoss = bb3.m_bbBottom - m_mkt.vspread;
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-market[%d]", timeframe));
+      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-rr2[%d]", timeframe));
+      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%]", signalOrigin, timeframe));
    }
-   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-limit[%d]", timeframe));
+   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt[%d]", signalOrigin, timeframe));
 }
 
-void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice) {
+void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 
@@ -122,10 +128,10 @@ void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice
    double target = bb.m_bbBottom;
    double stopLoss = bb3.m_bbTop + m_mkt.vspread;
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-market[%d]", timeframe));
+      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-rr2[%d]", timeframe));
+      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%d]", signalOrigin, timeframe));
    }
-   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-limit[%d]", timeframe));
+   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt[%d]", signalOrigin, timeframe));
 }

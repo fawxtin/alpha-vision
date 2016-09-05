@@ -91,8 +91,8 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    } else if (hmaMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
               stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
       scalperBuy(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
-   } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE && // crossing up
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+   } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
+              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing up
       scalperBuy(timeframe, Ask, "macd");
    } else if (hmaMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
@@ -100,8 +100,8 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    } else if (hmaMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
       scalperSell(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
-   } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE && // crossing up
-              stoch.m_signal >= STOCH_OVERSOLD_THRESHOLD) {
+   } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
+              stoch.m_signal >= STOCH_OVERSOLD_THRESHOLD) { // crossing down
       scalperSell(timeframe, Bid, "macd");
    }
 }
@@ -130,12 +130,12 @@ void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice, str
    }
    
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP/%s-market[%d]", signalOrigin, timeframe));
+      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP-%s-mkt[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP/%s-rr[%d]", signalOrigin, timeframe));
+      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP-%s-rr[%d]", signalOrigin, timeframe));
    }
-   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP/%s-limit[%d]", signalOrigin, timeframe));
+   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP-%s-lmt[%d]", signalOrigin, timeframe));
 }
 
 void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
@@ -162,10 +162,10 @@ void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, st
    }
 
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP/%s-market[%d]", signalOrigin, timeframe));
+      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("SCLP-%s-mkt[%d]", signalOrigin, timeframe));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP/%s-rr[%d]", signalOrigin, timeframe));
+      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("SCLP-%s-rr[%d]", signalOrigin, timeframe));
    }
-   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP/%s-limit[%d]", signalOrigin, timeframe));
+   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("SCLP-%s-lmt[%d]", signalOrigin, timeframe));
 }
