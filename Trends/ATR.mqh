@@ -36,6 +36,7 @@ class ATRdelta : public Trend {
          m_timeframe = timeframe;
          m_period1 = period1;
          m_period2 = period2;
+         m_trend = TREND_VOLATILITY_EMPTY;
       }
 
       void calculate(void) {
@@ -46,18 +47,21 @@ class ATRdelta : public Trend {
          
          // set volatility states: 
          // TREND_VOLATILITY_LOW; TREND_VOLATILITY_HIGH; TREND_VOLATILITY_LOW_TO_HIGH
+         if (m_atr2 == 0 || m_atr2_i == 0) {
+            PrintFormat("[atr.debug] zeroed atr2: (%.4f, %.4f)", m_atr2, m_atr2_i);
+            return;
+         }
+         
          if (m_atr1 <= m_atr2) { // low volatility
-            m_trend = TREND_VOLATILITY_LOW;
-            //PrintFormat("[debug] %d / %d (P1 %.4f, %.4f) / (P2 %.4f, %.4f)", Bars, m_timeframe, m_atr1_i, m_atr1, m_atr2_i, m_atr2);
+            setTrendHst(TREND_VOLATILITY_LOW);
          } else {
-            //PrintFormat("[debug] %d / %d (P1 %.4f, %.4f) / (P2 %.4f, %.4f)", Bars, m_timeframe, m_atr1_i, m_atr1, m_atr2_i, m_atr2);
             double atrDiff = (m_atr1 - m_atr2) / m_atr2;
             if (atrDiff * 100 > VOLATILITY_DELAY) {
                double atrDiff_i = (m_atr1_i - m_atr2_i) / m_atr2_i;
                if (atrDiff_i * 100 <= VOLATILITY_DELAY) m_trend = TREND_VOLATILITY_LOW_TO_HIGH;
-               else m_trend = TREND_VOLATILITY_HIGH;
+               else setTrendHst(TREND_VOLATILITY_HIGH);
             } else
-               m_trend = TREND_VOLATILITY_LOW;
+               setTrendHst(TREND_VOLATILITY_LOW);
          }
       }
             

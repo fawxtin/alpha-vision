@@ -45,15 +45,15 @@ void BBTrend::calculate(int period=20) {
    
    if (Bid >= m_bbMiddle) { // Positive Tunnel
       if (Bid <= m_bbTop) { // Inside Positive Tunnel
-         m_trend = TREND_POSITIVE;   
+         setTrendHst(TREND_POSITIVE);   
       } else { // Breakout Over Positive Tunnel
-         m_trend = TREND_POSITIVE_OVERBOUGHT;   
+         setTrendHst(TREND_POSITIVE_OVERBOUGHT);   
       }
    } else { // Negative Tunnel
       if (Bid >= m_bbBottom) { // Inside Negative Tunnel
-         m_trend = TREND_NEGATIVE;
+         setTrendHst(TREND_NEGATIVE);
       } else { // Breakout Negative Tunnel
-         m_trend = TREND_NEGATIVE_OVERSOLD;
+         setTrendHst(TREND_NEGATIVE_OVERSOLD);
       }
    }
 }

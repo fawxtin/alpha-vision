@@ -21,6 +21,7 @@ enum TRENDS {
    TREND_NEGATIVE_FROM_POSITIVE,
    TREND_NEGATIVE_OVERSOLD,
    TREND_NEGATIVE_BREAKOUT,
+   TREND_VOLATILITY_EMPTY,
    TREND_VOLATILITY_LOW,
    TREND_VOLATILITY_LOW_TO_HIGH,
    TREND_VOLATILITY_HIGH
@@ -42,7 +43,7 @@ class Trend {
       TrendChange m_trendHst;
       
    public:
-      Trend() {};
+      Trend() { m_trend = TREND_EMPTY; };
       int getTrend() { return m_trend; };
       
       TrendChange getTrendHst() { return m_trendHst; }

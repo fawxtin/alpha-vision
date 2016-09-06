@@ -36,7 +36,6 @@ class HMATrend : public Trend {
 };
 
 void HMATrend::calculate() {
-   m_trend = TREND_NEUTRAL;
    m_ma1 = iCustom(NULL, m_timeframe, "hma", m_period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
    m_ma1_i = iCustom(NULL, m_timeframe, "hma", m_period1, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
    m_ma2 = iCustom(NULL, m_timeframe, "hma", m_period2, 0, MODE_LWMA, PRICE_TYPICAL, 0, 0);
@@ -46,15 +45,15 @@ void HMATrend::calculate() {
       Print("HMA ", m_period1, " (", m_ma1_i, " -> ", m_ma1, ") / MA ", m_period2, " (", m_ma2_i, " -> ", m_ma2, ")");
    if (m_ma1_i >= m_ma2_i) { // came from a bull context
       if (m_ma1 > m_ma2) {
-         m_trend = TREND_POSITIVE;
+         setTrendHst(TREND_POSITIVE);
       } else { // switching to bear!
-         m_trend = TREND_NEGATIVE_FROM_POSITIVE;
+         setTrendHst(TREND_NEGATIVE_FROM_POSITIVE);
       }
    } else { // came from a bear context
       if (m_ma1 >= m_ma2) {
-         m_trend = TREND_POSITIVE_FROM_NEGATIVE;
+         setTrendHst(TREND_POSITIVE_FROM_NEGATIVE);
       } else {
-         m_trend = TREND_NEGATIVE;
+         setTrendHst(TREND_NEGATIVE);
       }
    }
 }

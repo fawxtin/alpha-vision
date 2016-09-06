@@ -30,39 +30,42 @@ class AlphaVisionTraderScalper : public AlphaVisionTrader {
 
 void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   HMATrend *hmaMj = av.m_hmaMajor;
-   HMATrend *hmaMn = av.m_hmaMinor;
-   StochasticTrend *stoch = av.m_stoch;
    ATRdelta *atr = av.m_atr;
+   int higherTF = m_signals.getTimeFrameAbove(timeframe);
 
-   SignalChange *signal;
-   string simplifiedMj = hmaMj.simplify();
-   string simplifiedMn = hmaMn.simplify();
-   if (simplifiedMj != simplifiedMn) { // Neutral trend
-      m_signals.setSignal(timeframe, SSIGNAL_NEUTRAL);
-      signal = m_signals.getSignal(timeframe);
-      onSignalTrade(timeframe);
-   } else if (simplifiedMj == "POSITIVE") { // Positive trend - only buy
-      m_signals.setSignal(timeframe, SSIGNAL_POSITIVE);
-      signal = m_signals.getSignal(timeframe);
-      if (signal.changed) {
-         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe),
-                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
-         if (stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive[%d]", timeframe));
-         // TODO: else update current positions stoploss and sell more
-      }
-      onSignalTrade(timeframe);
-   } else if (simplifiedMj == "NEGATIVE") { // Negative trend - only sell
-      m_signals.setSignal(timeframe, SSIGNAL_NEGATIVE);
-      signal = m_signals.getSignal(timeframe);
-      if (signal.changed) {
-         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe), 
-                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
-         if (stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative[%d]", timeframe));
-         // TODO: else update current positions stoploss and sell more
-      }
-      onSignalTrade(timeframe);
-   }
+   // scalper not trading on high volatility
+   if (atr.getTrend() == TREND_VOLATILITY_HIGH || atr.getTrend() == TREND_VOLATILITY_LOW_TO_HIGH) return;
+   else onSignalTrade(timeframe);
+
+   // TODO: maybe scalper can act better scalping on major timeframe trend rule
+//   SignalChange *signal;
+//   string simplifiedMj = hmaMj.simplify();
+//   string simplifiedMn = hmaMn.simplify();
+//   if (simplifiedMj != simplifiedMn) { // Neutral trend
+//      m_signals.setSignal(timeframe, SSIGNAL_NEUTRAL);
+//      signal = m_signals.getSignal(timeframe);
+//      onSignalTrade(timeframe);
+//   } else if (simplifiedMj == "POSITIVE") { // Positive trend - only buy
+//      m_signals.setSignal(timeframe, SSIGNAL_POSITIVE);
+//      signal = m_signals.getSignal(timeframe);
+//      if (signal.changed) {
+//         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe),
+//                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
+//         if (stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive[%d]", timeframe));
+//         // TODO: else update current positions stoploss and sell more
+//      }
+//      onSignalTrade(timeframe);
+//   } else if (simplifiedMj == "NEGATIVE") { // Negative trend - only sell
+//      m_signals.setSignal(timeframe, SSIGNAL_NEGATIVE);
+//      signal = m_signals.getSignal(timeframe);
+//      if (signal.changed) {
+//         Alert(StringFormat("[Trader/%s] %s signal changed to: %s/%s", Symbol(), m_signals.getTimeframeStr(timeframe), 
+//                            EnumToString((SSIGNALS) signal.current), EnumToString((TRENDS) atr.getTrend())));
+//         if (stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative[%d]", timeframe));
+//         // TODO: else update current positions stoploss and sell more
+//      }
+//      onSignalTrade(timeframe);
+//   }
 }
 
 //void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
@@ -74,35 +77,21 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
 
 void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   HMATrend *hmaMj = av.m_hmaMajor;
+   RainbowTrend *rainbow = av.m_rainbow;
    HMATrend *hmaMn = av.m_hmaMinor;
-   MACDTrend *macd = av.m_macd;
    StochasticTrend *stoch = av.m_stoch;
    ATRdelta *atr = av.m_atr;
    BBTrend *bb = av.m_bb;
 
-   // scalper not trading on high volatility
-   if (atr.getTrend() == TREND_VOLATILITY_HIGH || atr.getTrend() == TREND_VOLATILITY_LOW_TO_HIGH) return;
-   
+   TrendChange tc = rainbow.getTrendHst();
    // using fast trend signals and current trend BB positioning
-   if (hmaMj.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
-       stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      scalperBuy(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
-   } else if (hmaMn.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
-              stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      scalperBuy(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
-   } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing up
-      scalperBuy(timeframe, Ask, "macd");
-   } else if (hmaMj.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      scalperSell(timeframe, hmaMj.getMAPeriod2(), "hmaMj");
-   } else if (hmaMn.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      scalperSell(timeframe, hmaMn.getMAPeriod2(), "hmaMn");
-   } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
-              stoch.m_signal >= STOCH_OVERSOLD_THRESHOLD) { // crossing down
-      scalperSell(timeframe, Bid, "macd");
+   if (tc.changed == false) return;
+   if (tc.current == TREND_POSITIVE &&
+       stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
+      scalperBuy(timeframe, hmaMn.getMAPeriod1(), "rainbow");
+   } else if (tc.current == TREND_NEGATIVE &&
+              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down on overbought territory
+      scalperSell(timeframe, hmaMn.getMAPeriod1(), "rainbow");
    }
 }
 

@@ -47,25 +47,25 @@ void StochasticTrend::calculate(void) {
    // TODO: read more about stochastic and the better way to deal with its signals
    if (m_signal >= STOCHASTIC_REGION_OVERBOUGHT) { // overbought region
       if (m_main_i > m_signal && m_signal > m_main) { // crossing
-         m_trend = TREND_NEGATIVE_FROM_POSITIVE;
+         setTrendHst(TREND_NEGATIVE_FROM_POSITIVE);
       } else if (m_main > m_signal) {
-         m_trend = TREND_POSITIVE_OVERBOUGHT;
+         setTrendHst(TREND_POSITIVE_OVERBOUGHT);
       } else {
-         m_trend = TREND_NEGATIVE;
+         setTrendHst(TREND_NEGATIVE);
       }
    } else if (m_signal >= STOCHASTIC_REGION_OVERBOUGHT) { // oversold region
       if (m_main_i < m_signal && m_signal < m_main) { // crossing
-         m_trend = TREND_POSITIVE_FROM_NEGATIVE;
+         setTrendHst(TREND_POSITIVE_FROM_NEGATIVE);
       } else if (m_main < m_signal) {
-         m_trend = TREND_NEGATIVE_OVERSOLD;
+         setTrendHst(TREND_NEGATIVE_OVERSOLD);
       } else {
-         m_trend = TREND_POSITIVE;
+         setTrendHst(TREND_POSITIVE);
       }   
    } else { // middle, neutral region
       if (m_main > m_signal) {
-         m_trend = TREND_POSITIVE;
+         setTrendHst(TREND_POSITIVE);
       } else {
-         m_trend = TREND_NEGATIVE;
+         setTrendHst(TREND_NEGATIVE);
       }
    }
 }

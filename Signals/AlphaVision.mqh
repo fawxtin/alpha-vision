@@ -11,6 +11,7 @@
 
 #include <Trends\trends.mqh>
 #include <Trends\HMA.mqh>
+#include <Trends\Rainbow.mqh>
 #include <Trends\ATR.mqh>
 #include <Trends\BB.mqh>
 #include <Trends\Stochastic.mqh>
@@ -26,8 +27,9 @@
 
 class AlphaVision : public HashValue {
    public:
-      HMATrend *m_hmaMinor;
+      RainbowTrend *m_rainbow;
       HMATrend *m_hmaMajor;
+      HMATrend *m_hmaMinor;
       BBTrend *m_bb;
       BBTrend *m_bb3;
       StochasticTrend *m_stoch;
@@ -35,8 +37,9 @@ class AlphaVision : public HashValue {
       ATRdelta *m_atr;
           
    
-      AlphaVision(HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3, 
+      AlphaVision(RainbowTrend *rainbow, HMATrend *major, HMATrend *minor, BBTrend *bb, BBTrend *bb3, 
                   StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
+         m_rainbow = rainbow;
          m_hmaMajor = major;
          m_hmaMinor = minor;
          m_bb = bb;
@@ -47,6 +50,7 @@ class AlphaVision : public HashValue {
       }
 
       void ~AlphaVision() {
+         delete m_rainbow;
          delete m_hmaMinor;
          delete m_hmaMajor;
          delete m_bb;
@@ -57,6 +61,7 @@ class AlphaVision : public HashValue {
       }
       
       void calculate() {
+         m_rainbow.calculate();
          m_hmaMajor.calculate();
          m_hmaMinor.calculate();
          m_bb.calculate();
@@ -80,7 +85,8 @@ class AlphaVisionSignals : public Signals {
       bool initOn(int timeframe, int period1, int period2, int period3) {
          string tfKey = getKey(timeframe);
          if (! m_hash.hContainsKey(tfKey)) {
-            m_hash.hPut(tfKey, new AlphaVision(new HMATrend(timeframe, period2, period3),
+            m_hash.hPut(tfKey, new AlphaVision(new RainbowTrend(timeframe),
+                                               new HMATrend(timeframe, period2, period3),
                                                new HMATrend(timeframe, period1, period2),
                                                new BBTrend(timeframe),
                                                new BBTrend(timeframe, 3.0),
