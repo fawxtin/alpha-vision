@@ -7,7 +7,7 @@
 #property link      "https://www.mql5.com"
 #property strict
 
-#include <Positions\Trader.mqh>
+#include <Traders\Trader.mqh>
 #include <Signals\AlphaVision.mqh>
 
 #ifndef __TRADER_ALPHAVISION__

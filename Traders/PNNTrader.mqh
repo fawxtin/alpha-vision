@@ -8,7 +8,7 @@
 #property strict
 
 
-#include <Positions\AlphaVisionTrader.mqh>
+#include <Traders\AlphaVisionTrader.mqh>
 
 class AlphaVisionTraderPNN : public AlphaVisionTrader {
    public:

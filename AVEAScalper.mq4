@@ -9,7 +9,7 @@
 #property strict
 
 #include <Signals\AlphaVision.mqh>
-#include <Positions\AlphaVisionTraderScalper.mqh>
+#include <Traders\ScalperTrader.mqh>
 
 
 ////

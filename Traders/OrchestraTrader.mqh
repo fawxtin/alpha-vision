@@ -7,7 +7,7 @@
 #property link      "https://www.mql5.com"
 #property strict
 
-#include <Positions\AlphaVisionTrader.mqh>
+#include <Traders\AlphaVisionTrader.mqh>
 
 #define STOCH_OVERSOLD_THRESHOLD 35
 #define STOCH_OVERBOUGHT_THRESHOLD 65

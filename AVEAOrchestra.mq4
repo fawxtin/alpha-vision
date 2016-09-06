@@ -8,14 +8,9 @@
 #property version   "1.001"
 #property strict
 
-#include <Trends\trends.mqh>
-#include <Trends\HMA.mqh>
-
-#include <Positions\Positions.mqh>
-#include <Positions\AlphaVisionTrader.mqh>
-#include <Positions\AlphaVisionTraderSimple.mqh>
-#include <Positions\AlphaVisionTraderPNN.mqh>
-#include <Positions\AlphaVisionTraderOrchestra.mqh>
+#include <Traders\SimpleTrader.mqh>
+#include <Traders\PNNTrader.mqh>
+#include <Traders\OrchestraTrader.mqh>
 
 #include <Signals\AlphaVision.mqh>
 

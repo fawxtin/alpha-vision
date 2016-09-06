@@ -15,5 +15,6 @@ cp "${MT4_DIR}/Include/Logging/"* Logging/
 cp "${MT4_DIR}/Include/Positions/"*.mqh Positions/
 cp "${MT4_DIR}/Include/Signals/"*.mqh Signals/ 
 cp "${MT4_DIR}/Include/Trends/"*.mqh Trends/ 
+cp "${MT4_DIR}/Include/Traders/"*.mqh Traders/ 
 
 #find . -type f -not -path "./*" -exec dos2unix {} \;

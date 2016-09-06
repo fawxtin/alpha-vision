@@ -7,7 +7,7 @@
 #property link      "https://www.mql5.com"
 #property strict
 
-#include <Positions\AlphaVisionTrader.mqh>
+#include <Traders\AlphaVisionTrader.mqh>
 
 class AlphaVisionTraderSimple : public AlphaVisionTrader {
 
