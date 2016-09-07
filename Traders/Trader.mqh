@@ -171,7 +171,8 @@ void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, dou
    
    if (ticket == -1) {
       int check = GetLastError();
-      Alert(StringFormat("[Trader.goLong/%s] ERROR opening order (%s): %d / %s", Symbol(), reason, check, ErrorDescription(check)));
+      Alert(StringFormat("[Trader.goLong/%s] ERROR (%d/%s) opening %s order '%s': %.4f => %.4f => %.4f", Symbol(), 
+                         check, ErrorDescription(check), orderType, reason, stopLoss, signalPrice, targetPrice));
    } else {
       longPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
    } 
@@ -205,7 +206,8 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
    
    if (ticket == -1) {
       int check = GetLastError();
-      Alert(StringFormat("[Trader.goShort/%s] ERROR opening order (%s): %d / %s", Symbol(), reason, check, ErrorDescription(check)));
+      Alert(StringFormat("[Trader.goShort/%s] ERROR (%d/%s) opening %s order '%s': %.4f => %.4f => %.4f", Symbol(), 
+                         check, ErrorDescription(check), orderType, reason, stopLoss, signalPrice, targetPrice));
    } else {
       shortPs.add(new Position(ticket, orderType, marketPrice, signalPrice));
    }
