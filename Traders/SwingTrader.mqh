@@ -13,13 +13,13 @@
 #define STOCH_OVERBOUGHT_THRESHOLD 60
 #define MIN_RISK_AND_REWARD_RATIO 1.55
 
-class AlphaVisionTraderScalper : public AlphaVisionTrader {
+class AlphaVisionTraderSwing : public AlphaVisionTrader {
    private:
       bool m_buySetupOk;
       bool m_sellSetupOk;
       
    public:
-      AlphaVisionTraderScalper(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {
+      AlphaVisionTraderSwing(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {
          m_buySetupOk = false;
          m_sellSetupOk = false;
       }
@@ -35,20 +35,21 @@ class AlphaVisionTraderScalper : public AlphaVisionTrader {
 
 };
 
-void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
+void AlphaVisionTraderSwing::onTrendSetup(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    ATRdelta *atr = av.m_atr;
 
-   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
-      m_buySetupOk = false;
-      m_sellSetupOk = true;
-   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
-      m_buySetupOk = true;
-      m_sellSetupOk = false;
-   } else if (m_buySetupOk == false || m_sellSetupOk == false) {
+   //if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+   //   m_buySetupOk = false;
+   //   m_sellSetupOk = true;
+   //} else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+   //   m_buySetupOk = true;
+   //   m_sellSetupOk = false;
+   //} else 
+   if (m_buySetupOk == false || m_sellSetupOk == false) {
       m_buySetupOk = true;
       m_sellSetupOk = true;
    }
@@ -56,7 +57,7 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    checkVolatility(timeframe);
 }
 
-void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
+void AlphaVisionTraderSwing::checkVolatility(int timeframe) { // not using it
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    ATRdelta *atr = av.m_atr;
 
@@ -64,7 +65,7 @@ void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
    if (atr.getTrend() == TREND_VOLATILITY_LOW) onSignalTrade(timeframe); 
 }
 
-void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
+void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
@@ -90,7 +91,7 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    }
 }
 
-void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice, string signalOrigin="") {
+void AlphaVisionTraderSwing::scalperBuy(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
@@ -113,12 +114,12 @@ void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice, str
       stopLoss = bb3.m_bbBottom - (m_mkt.vspread * 2);      
    }
    
-   safeGoLong(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-mkt", signalOrigin));
-   safeGoLong(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-sgn", signalOrigin));
-   safeGoLong(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-lmt", signalOrigin));
+   safeGoLong(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-mkt", signalOrigin));
+   safeGoLong(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-sgn", signalOrigin));
+   safeGoLong(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-lmt", signalOrigin));
 }
 
-void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
+void AlphaVisionTraderSwing::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 
@@ -142,7 +143,7 @@ void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, st
    }
 
    
-   safeGoShort(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-mkt", signalOrigin));
-   safeGoShort(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-sgn", signalOrigin));
-   safeGoShort(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-lmt", signalOrigin));
+   safeGoShort(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-mkt", signalOrigin));
+   safeGoShort(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-sgn", signalOrigin));
+   safeGoShort(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-lmt", signalOrigin));
 }

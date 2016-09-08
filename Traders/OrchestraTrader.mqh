@@ -107,12 +107,12 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice,
    double target = bb.m_bbTop;
    double stopLoss = bb3.m_bbBottom - m_mkt.vspread;
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt[%d]", signalOrigin, timeframe));
+      goLong(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt", signalOrigin));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%d]", signalOrigin, timeframe));
+      goLong(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2", signalOrigin));
    }
-   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt[%d]", signalOrigin, timeframe));
+   goLong(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt", signalOrigin));
 }
 
 void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice, string signalOrigin="") {
@@ -128,10 +128,10 @@ void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice
    double target = bb.m_bbBottom;
    double stopLoss = bb3.m_bbTop + m_mkt.vspread;
    if (riskAndRewardRatio(marketPrice, target, stopLoss) > MIN_RISK_AND_REWARD_RATIO) {
-      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt[%d]", signalOrigin, timeframe));
+      goShort(timeframe, marketPrice, target, stopLoss, StringFormat("ORCH-%s-mkt", signalOrigin));
    } else {
       double entryPrice = riskAndRewardRatioEntry(MIN_RISK_AND_REWARD_RATIO, target, stopLoss);
-      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2[%d]", signalOrigin, timeframe));
+      goShort(timeframe, entryPrice, target, stopLoss, StringFormat("ORCH-%s-rr2", signalOrigin));
    }
-   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt[%d]", signalOrigin, timeframe));
+   goShort(timeframe, limitPrice, target, stopLoss, StringFormat("ORCH-%s-lmt", signalOrigin));
 }

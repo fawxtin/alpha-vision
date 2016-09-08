@@ -17,7 +17,7 @@
 #ifndef __POSITIONS_TRADER__
 #define __POSITIONS_TRADER__ true
 
-#define EXPIRE_NEVER D'2018.01.01 23:59:59'   // 60 * 60 * 24 * 7
+#define EXPIRE_BARS 20   // Expire bet after 20 bars
 
 struct MktT {
    int vdigits;
@@ -82,6 +82,8 @@ class Trader {
       // trader executing orders
       void goLong(int timeframe, double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
       void goShort(int timeframe, double signalPrice, double priceTarget=0, double stopLoss=0, string reason="");
+      void safeGoLong(int timeframe, double entryPrice, double targetPrice, double stopLoss, double rrRatio, string reason="");
+      void safeGoShort(int timeframe, double entryPrice, double targetPrice, double stopLoss, double rrRatio, string reason="");
       void closeLongs(int timeframe, string reason);
       void closeShorts(int timeframe, string reason);
 };
@@ -137,6 +139,24 @@ void Trader::markBarTraded(string longOrShort, int timeframe) {
 }
 
 
+void Trader::safeGoLong(int timeframe, double entryPrice, double targetPrice, double stopLoss, double rrRatio, string reason="") {
+   if (riskAndRewardRatio(entryPrice, targetPrice, stopLoss) > rrRatio) {
+      goLong(timeframe, entryPrice, targetPrice, stopLoss, reason);
+   } else {
+      double safeEntryPrice = riskAndRewardRatioEntry(rrRatio, targetPrice, stopLoss);
+      goLong(timeframe, safeEntryPrice, targetPrice, stopLoss, StringFormat("%s-rr", reason));
+   }
+}
+
+void Trader::safeGoShort(int timeframe, double entryPrice, double targetPrice, double stopLoss, double rrRatio, string reason="") {
+   if (riskAndRewardRatio(entryPrice, targetPrice, stopLoss) > rrRatio) {
+      goShort(timeframe, entryPrice, targetPrice, stopLoss, reason);
+   } else {
+      double safeEntryPrice = riskAndRewardRatioEntry(rrRatio, targetPrice, stopLoss);
+      goShort(timeframe, safeEntryPrice, targetPrice, stopLoss, StringFormat("%s-rr", reason));
+   }
+}
+
 
 //// Executing Orders
 /*
@@ -149,10 +169,11 @@ void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, dou
    if (longPs.count() >= MAX_POSITIONS) return; // full
 
    int ticket;
-   datetime expireOn20thBar = TimeCurrent() + timeframe * 60 * 20; // 20 bars
+   datetime expires = TimeCurrent() + timeframe * 60 * EXPIRE_BARS; // 20 bars
    double marketPrice = Ask;
    signalPrice = NormalizeDouble(signalPrice, m_mkt.vdigits);
    
+   reason = StringFormat("%s[%d]", reason, timeframe);
    string orderType = "market";
    if (MathAbs(marketPrice - signalPrice) < m_mkt.vspread) { // buy market
       PrintFormat("[Trader.goLong/%s] opening At market (%.4f, %.4f)", reason, signalPrice, marketPrice);
@@ -160,12 +181,12 @@ void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, dou
    } else if (signalPrice < marketPrice) { // buy limit
       PrintFormat("[Trader.goLong/%s] opening Limit at %.4f", reason, signalPrice);
       ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, signalPrice, 3,
-                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expireOn20thBar, clrAliceBlue);
+                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
       orderType = "limit";
    } else {// buy stop
       PrintFormat("[Trader.goLong/%s] opening Stop at %.4f", reason, signalPrice);
       ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, signalPrice, 3,
-                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expireOn20thBar, clrAliceBlue);
+                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
       orderType = "stop";
    }
    
@@ -184,7 +205,7 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
    
    // short trades
    int ticket;
-   datetime expireOn20thBar = TimeCurrent() + timeframe * 60 * 20; // 20 bars
+   datetime expires = TimeCurrent() + timeframe * 60 * EXPIRE_BARS; // 20 bars
    double marketPrice = Bid;
    signalPrice = NormalizeDouble(signalPrice, m_mkt.vdigits);
    
@@ -196,12 +217,12 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
       PrintFormat("[Trader.goShort/%s] opening Limit at %.4f", reason, signalPrice);
       orderType = "limit";
       ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, signalPrice, 3,
-                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expireOn20thBar, clrPink);
+                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrPink);
    } else { // sell stop
       PrintFormat("[Trader.goShort/%s opening Stop at %.4f", reason, signalPrice);
       orderType = "stop";
       ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, signalPrice, 3,
-                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expireOn20thBar, clrAliceBlue);
+                         stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
    }
    
    if (ticket == -1) {
