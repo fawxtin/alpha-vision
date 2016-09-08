@@ -74,8 +74,8 @@ int OnInit() {
 
    // loading signals
    AlphaVisionSignals *avSignals = new AlphaVisionSignals(gSignalTF);
-   avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
-   avSignals.calculateOn(gSignalTF.fast);
+   //avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
+   //avSignals.calculateOn(gSignalTF.fast);
    avSignals.initOn(gSignalTF.current, iPeriod1, iPeriod2, iPeriod3);
    avSignals.calculateOn(gSignalTF.current);
    avSignals.initOn(gSignalTF.major, iPeriod1, iPeriod2, iPeriod3);
@@ -86,7 +86,7 @@ int OnInit() {
 
    // loading current positions
    gTrader = new AlphaVisionTraderSwing(avSignals);
-   gTrader.loadCurrentOrders(gSignalTF.fast);
+   //gTrader.loadCurrentOrders(gSignalTF.fast);
    gTrader.loadCurrentOrders(gSignalTF.current);
    gTrader.loadCurrentOrders(gSignalTF.major);
    gTrader.loadCurrentOrders(gSignalTF.super);
@@ -100,12 +100,12 @@ int OnInit() {
 
 // OnTester - close positions
 double OnTester() {
-   gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
+   //gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.current, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.major, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.super, "End-Of-Test");
 
-   gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
+   //gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.current, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.major, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.super, "End-Of-Test");
@@ -152,13 +152,13 @@ void OnTick() {
       return;
    }
    // remove already closed orders
-   gTrader.cleanOrders(gSignalTF.fast);
+   //gTrader.cleanOrders(gSignalTF.fast);
    gTrader.cleanOrders(gSignalTF.current);
    gTrader.cleanOrders(gSignalTF.major);
    gTrader.cleanOrders(gSignalTF.super);
    
    AlphaVisionSignals *signals = gTrader.getSignals();
-   signals.calculateOn(gSignalTF.fast);
+   //signals.calculateOn(gSignalTF.fast);
    //gTrader.onTrendSetup(gSignalTF.fast); - disabled trading fast track
    
    if (iIsTest) {
