@@ -9,20 +9,13 @@
 
 #include <Traders\AlphaVisionTrader.mqh>
 
-#define STOCH_OVERSOLD_THRESHOLD 40
-#define STOCH_OVERBOUGHT_THRESHOLD 60
+#define STOCH_OVERSOLD_THRESHOLD 35
+#define STOCH_OVERBOUGHT_THRESHOLD 65
 #define MIN_RISK_AND_REWARD_RATIO 1.55
 
-class AlphaVisionTraderScalper : public AlphaVisionTrader {
-   private:
-      bool m_buySetupOk;
-      bool m_sellSetupOk;
-      
+class AlphaVisionTraderScalper : public AlphaVisionTrader {      
    public:
-      AlphaVisionTraderScalper(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {
-         m_buySetupOk = false;
-         m_sellSetupOk = false;
-      }
+      AlphaVisionTraderScalper(AlphaVisionSignals *signals): AlphaVisionTrader(signals) { }
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
@@ -39,8 +32,9 @@ void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   ATRdelta *atr = av.m_atr;
+   BBTrend *bb = avHi.m_bb;
+   RainbowTrend *rainbowSlow = avHi.m_rainbowSlow;
+   double bbPosition = bb.getRelativePosition();
 
    if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
       m_buySetupOk = false;
@@ -60,7 +54,6 @@ void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    ATRdelta *atr = av.m_atr;
 
-   // scalper not trading on high volatility
    if (atr.getTrend() == TREND_VOLATILITY_LOW) onSignalTrade(timeframe); 
 }
 
@@ -70,23 +63,22 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    StochasticTrend *stochHi = avHi.m_stoch;
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   RainbowTrend *rainbow = av.m_rainbow;
-   HMATrend *hmaMn = av.m_hmaMinor;
+   RainbowTrend *rainbowFast = av.m_rainbowFast;
    StochasticTrend *stoch = av.m_stoch;
    ATRdelta *atr = av.m_atr;
    BBTrend *bb = av.m_bb;
 
-   TrendChange tc = rainbow.getTrendHst();
+   TrendChange tc = rainbowFast.getTrendHst();
    // using fast trend signals and current trend BB positioning
    if (tc.changed == false) return;
    if (m_buySetupOk == true && tc.current == TREND_POSITIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
       PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperBuy(timeframe, hmaMn.getMAPeriod1(), "rainbow");
+      scalperBuy(timeframe, rainbowFast.m_ma3, "rainbow");
    } else if (m_sellSetupOk == true && tc.current == TREND_NEGATIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down on overbought territory
       PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperSell(timeframe, hmaMn.getMAPeriod1(), "rainbow");
+      scalperSell(timeframe, rainbowFast.m_ma3, "rainbow");
    }
 }
 

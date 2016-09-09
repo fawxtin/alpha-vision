@@ -8,8 +8,8 @@
 #property version   "1.001"
 #property strict
 
-#include <Traders\SimpleTrader.mqh>
-#include <Traders\PNNTrader.mqh>
+//#include <Traders\SimpleTrader.mqh>
+//#include <Traders\PNNTrader.mqh>
 #include <Traders\OrchestraTrader.mqh>
 
 #include <Signals\AlphaVision.mqh>
@@ -20,10 +20,7 @@
 ////
 
 input bool iIsTest = false;
-input int iPeriod1 = 20;
-input int iPeriod2 = 50;
-input int iPeriod3 = 200;
-// TODO: input higher time interval than current
+
 input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
@@ -77,12 +74,16 @@ int OnInit() {
 
    // loading signals
    AlphaVisionSignals *avSignals = new AlphaVisionSignals(gSignalTF);
-   avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.fast);
    avSignals.calculateOn(gSignalTF.fast);
-   avSignals.initOn(gSignalTF.current, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.current);
    avSignals.calculateOn(gSignalTF.current);
-   avSignals.initOn(gSignalTF.major, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.major);
    avSignals.calculateOn(gSignalTF.major);
+   avSignals.initOn(gSignalTF.super);
+   avSignals.calculateOn(gSignalTF.super);
+   avSignals.initOn(PERIOD_MN1);
+   avSignals.calculateOn(PERIOD_MN1);
 
 
    // loading current positions
@@ -90,6 +91,7 @@ int OnInit() {
    gTrader.loadCurrentOrders(gSignalTF.fast);
    gTrader.loadCurrentOrders(gSignalTF.current);
    gTrader.loadCurrentOrders(gSignalTF.major);
+   gTrader.loadCurrentOrders(gSignalTF.super);
    
    gCountMinutes = 0;
    gCountTicks = 0;
@@ -103,10 +105,12 @@ double OnTester() {
    gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.current, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.major, "End-Of-Test");
+   gTrader.closeLongs(gSignalTF.super, "End-Of-Test");
 
    gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.current, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.major, "End-Of-Test");
+   gTrader.closeShorts(gSignalTF.super, "End-Of-Test");
 
    return 0;
 }
@@ -134,8 +138,9 @@ void OnTimer() {
    } else if (gCountMinutes % 15 == 0) { // every 15 minutes
       signals.calculateOn(gSignalTF.major);
       gTrader.onTrendSetup(gSignalTF.major);
-   } else if (gCountMinutes % 28 == 0) {
-      // calculate gAlphaVisionSuper - on weekly   
+   } else if (gCountMinutes % 58 == 0) {
+      signals.calculateOn(gSignalTF.super);
+      gTrader.onTrendSetup(gSignalTF.super);
    }
 }
 
@@ -152,6 +157,7 @@ void OnTick() {
    gTrader.cleanOrders(gSignalTF.fast);
    gTrader.cleanOrders(gSignalTF.current);
    gTrader.cleanOrders(gSignalTF.major);
+   gTrader.cleanOrders(gSignalTF.super);
    
    AlphaVisionSignals *signals = gTrader.getSignals();
    signals.calculateOn(gSignalTF.fast);
@@ -160,15 +166,18 @@ void OnTick() {
    if (iIsTest) {
       //signals.calculateOn(gSignalTF.current);
       // strategy tester does not call onTimer
-      //gCountTicks++;
-      //if (gCountTicks % 35 == 0) {
+      gCountTicks++;
+      if (gCountTicks % 35 == 0) {
          signals.calculateOn(gSignalTF.current);
          gTrader.onTrendSetup(gSignalTF.current);
-      //} else if (gCountTicks >= 300) {
-      //   gCountTicks = 0;
+      } else if (gCountTicks % 300 == 0) {
          signals.calculateOn(gSignalTF.major);
          gTrader.onTrendSetup(gSignalTF.major);
-      //}
+      } else if (gCountTicks >= 900) {
+         gCountTicks = 0;
+         signals.calculateOn(gSignalTF.super);
+         gTrader.onTrendSetup(gSignalTF.super);
+      }
    }
 }
 

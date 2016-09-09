@@ -19,6 +19,7 @@ class BBTrend : public Trend {
       double m_bbMiddle;
       double m_bbBottom;
       double m_bbTop;
+      //double m_bbVolatility;
       bool __debug;
       
       BBTrend(void): m_timeframe(0), m_stdDev(2.0), __debug(false) { m_trendType = "BB"; };
@@ -27,6 +28,8 @@ class BBTrend : public Trend {
       
       void setDebug(bool debug) { __debug = debug; };
       void calculate(int period=20);
+      double getRelativePosition();
+      double getVolatility();
 };
 
 void BBTrend::calculate(int period=20) {
@@ -56,6 +59,15 @@ void BBTrend::calculate(int period=20) {
          setTrendHst(TREND_NEGATIVE_OVERSOLD);
       }
    }
+}
+
+double BBTrend::getRelativePosition(void) {
+   if (m_bbBottom == 0 || m_bbMiddle == 0 || m_bbTop == 0) return 0;
+   
+   double price = (Ask - Bid) / 2;
+   double range = m_bbTop - m_bbBottom;
+   
+   return (price - m_bbMiddle) * m_stdDev / range;
 }
 
 #endif

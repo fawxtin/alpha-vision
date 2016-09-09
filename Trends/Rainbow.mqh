@@ -34,10 +34,10 @@ class RainbowTrend : public Trend {
       RainbowTrend(int timeframe, int period1=5, int period2=8, int period3=13) : m_period1(period1), 
                m_period2(period2), m_period3(period3) {
          m_trendType = "RAINBOW";
-         m_period1 = 5;
-         m_period2 = 8;
-         m_period3 = 13;
          m_timeframe = timeframe;
+         m_period1 = period1;
+         m_period2 = period2;
+         m_period3 = period3;
       }
       
       virtual void calculate(void);

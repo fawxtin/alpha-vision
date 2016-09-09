@@ -16,10 +16,14 @@
 class AlphaVisionTrader : public Trader {
    protected:
       AlphaVisionSignals *m_signals;
+      bool m_buySetupOk;
+      bool m_sellSetupOk;
 
    public:
       AlphaVisionTrader(AlphaVisionSignals *signals) {
          m_signals = signals;
+         m_buySetupOk = false;
+         m_sellSetupOk = false;
       }
       
       void ~AlphaVisionTrader() { delete m_signals; }

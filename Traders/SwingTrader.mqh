@@ -71,8 +71,7 @@ void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    StochasticTrend *stochHi = avHi.m_stoch;
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   RainbowTrend *rainbow = av.m_rainbow;
-   HMATrend *hmaMn = av.m_hmaMinor;
+   RainbowTrend *rainbow = av.m_rainbowFast;
    StochasticTrend *stoch = av.m_stoch;
    ATRdelta *atr = av.m_atr;
    BBTrend *bb = av.m_bb;
@@ -83,11 +82,11 @@ void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    if (m_buySetupOk == true && tc.current == TREND_POSITIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
       PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperBuy(timeframe, hmaMn.getMAPeriod1(), "rainbow");
+      scalperBuy(timeframe, rainbow.m_ma3, "rainbow");
    } else if (m_sellSetupOk == true && tc.current == TREND_NEGATIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down on overbought territory
       PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperSell(timeframe, hmaMn.getMAPeriod1(), "rainbow");
+      scalperSell(timeframe, rainbow.m_ma3, "rainbow");
    }
 }
 

@@ -8,7 +8,7 @@ cp CustomIndicators/*.mq4 "${MT4_DIR}/Indicators/"
 cp Arrays/*.mqh "${MT4_DIR}/Include/Arrays/"
 
 ## EA and Scripts
-cp *EA.mq4 "${MT4_DIR}/Experts/"
+cp AVEA*.mq4 "${MT4_DIR}/Experts/"
 cp Scripts/*.mq4 "${MT4_DIR}/Scripts/"
 
 ## AV libraries
@@ -24,4 +24,6 @@ cp Signals/*.mqh "${MT4_DIR}/Include/Signals/"
 [ ! -e "${MT4_DIR}/Include/Trends/" ] && mkdir "${MT4_DIR}/Include/Trends/"
 cp Trends/*.mqh "${MT4_DIR}/Include/Trends/"
 
+[ ! -e "${MT4_DIR}/Include/Traders/" ] && mkdir "${MT4_DIR}/Include/Traders/"
+cp Traders/*.mqh "${MT4_DIR}/Include/Traders/"
 

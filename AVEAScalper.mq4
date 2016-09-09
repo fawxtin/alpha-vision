@@ -17,10 +17,7 @@
 ////
 
 input bool iIsTest = false;
-input int iPeriod1 = 20;
-input int iPeriod2 = 50;
-input int iPeriod3 = 200;
-// TODO: input higher time interval than current
+
 input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
@@ -74,11 +71,11 @@ int OnInit() {
 
    // loading signals
    AlphaVisionSignals *avSignals = new AlphaVisionSignals(gSignalTF);
-   avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.fast);
    avSignals.calculateOn(gSignalTF.fast);
-   avSignals.initOn(gSignalTF.current, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.current);
    avSignals.calculateOn(gSignalTF.current);
-   avSignals.initOn(gSignalTF.major, iPeriod1, iPeriod2, iPeriod3);
+   avSignals.initOn(gSignalTF.major);
    avSignals.calculateOn(gSignalTF.major);
 
 
@@ -160,11 +157,11 @@ void OnTick() {
       gCountTicks++;
       if (gCountTicks % 35 == 0) {
          signals.calculateOn(gSignalTF.current);
-         gTrader.onTrendSetup(gSignalTF.current);
+         //gTrader.onTrendSetup(gSignalTF.current);
       } else if (gCountTicks >= 300) {
          gCountTicks = 0;
          signals.calculateOn(gSignalTF.major);
-         gTrader.onTrendSetup(gSignalTF.major);
+         //gTrader.onTrendSetup(gSignalTF.major);
       }
    }
 }
