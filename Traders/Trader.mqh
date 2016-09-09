@@ -209,7 +209,8 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
    datetime expires = TimeCurrent() + timeframe * 60 * EXPIRE_BARS; // 20 bars
    double marketPrice = Bid;
    signalPrice = NormalizeDouble(signalPrice, m_mkt.vdigits);
-   
+
+   reason = StringFormat("%s[%d]", reason, timeframe);   
    string orderType = "market";
    if (MathAbs(signalPrice - marketPrice) < m_mkt.vspread) { // sell market
       PrintFormat("[Trader.goShort/%s] opening At market (%.4f, %.4f)", reason, signalPrice, marketPrice);
