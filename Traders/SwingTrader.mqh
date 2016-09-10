@@ -9,29 +9,22 @@
 
 #include <Traders\AlphaVisionTrader.mqh>
 
-#define STOCH_OVERSOLD_THRESHOLD 40
-#define STOCH_OVERBOUGHT_THRESHOLD 60
-#define MIN_RISK_AND_REWARD_RATIO 1.55
+#define STOCH_OVERSOLD_THRESHOLD 35
+#define STOCH_OVERBOUGHT_THRESHOLD 65
+#define MIN_RISK_AND_REWARD_RATIO 2
 
 class AlphaVisionTraderSwing : public AlphaVisionTrader {
-   private:
-      bool m_buySetupOk;
-      bool m_sellSetupOk;
-      
    public:
-      AlphaVisionTraderSwing(AlphaVisionSignals *signals): AlphaVisionTrader(signals) {
-         m_buySetupOk = false;
-         m_sellSetupOk = false;
-      }
+      AlphaVisionTraderSwing(AlphaVisionSignals *signals): AlphaVisionTrader(signals) { }
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
-      virtual void onSignalValidation(int timeframe) {}
+      virtual void onSignalValidation(int timeframe);
       virtual void checkVolatility(int timeframe);
       virtual void onScalpTrade(int timeframe);
       virtual void onBreakoutTrade(int timeframe) {}
-      void scalperBuy(int timeframe, double signalPrice, string signalOrigin="");
-      void scalperSell(int timeframe, double signalPrice, string signalOrigin="");
+      void swingBuy(int timeframe, double signalPrice, string signalOrigin="");
+      void swingSell(int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
@@ -42,34 +35,50 @@ void AlphaVisionTraderSwing::onTrendSetup(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    ATRdelta *atr = av.m_atr;
 
-   //if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
-   //   m_buySetupOk = false;
-   //   m_sellSetupOk = true;
-   //} else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
-   //   m_buySetupOk = true;
-   //   m_sellSetupOk = false;
-   //} else 
-   if (m_buySetupOk == false || m_sellSetupOk == false) {
+   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+      m_buySetupOk = false;
+      m_sellSetupOk = true;
+   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+      m_buySetupOk = true;
+      m_sellSetupOk = false;
+   } else if (m_buySetupOk == false || m_sellSetupOk == false) {
       m_buySetupOk = true;
       m_sellSetupOk = true;
    }
 
-   checkVolatility(timeframe);
+   onSignalValidation(timeframe);
 }
 
-void AlphaVisionTraderSwing::checkVolatility(int timeframe) { // not using it
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   ATRdelta *atr = av.m_atr;
-
-   // scalper not trading on high volatility
-   if (atr.getTrend() == TREND_VOLATILITY_LOW) onSignalTrade(timeframe); 
-}
-
-void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
+void AlphaVisionTraderSwing::onSignalValidation(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
+   RainbowTrend *rainbowHiFast = avHi.m_rainbowFast;
    StochasticTrend *stochHi = avHi.m_stoch;
 
+   TrendChange rHiFast = rainbowHiFast.getTrendHst();
+   if (rHiFast.current == TREND_NEUTRAL) { // Neutral trend
+      onSignalTrade(timeframe);
+   } else if (rHiFast.current == TREND_POSITIVE) { // Positive trend
+      if (rHiFast.changed) {
+         Alert(StringFormat("[SWNGTrader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF), 
+                            EnumToString((TRENDS) rHiFast.current)));
+         if (stochHi.m_signal > STOCH_OVERSOLD_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive", timeframe));
+         // TODO: else update current positions stoploss and sell more
+      }
+      onSignalTrade(timeframe);
+   } else if (rHiFast.current == TREND_POSITIVE) { // Negative trend
+      if (rHiFast.changed) {
+         Alert(StringFormat("[SWNGTrader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF),
+                            EnumToString((TRENDS) rHiFast.current)));
+         if (stochHi.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative", timeframe));
+         // TODO: else update current positions stoploss and sell more
+      }
+      onSignalTrade(timeframe);
+   }
+}
+
+
+void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbow = av.m_rainbowFast;
    StochasticTrend *stoch = av.m_stoch;
@@ -81,16 +90,14 @@ void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    if (tc.changed == false) return;
    if (m_buySetupOk == true && tc.current == TREND_POSITIVE &&
        stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
-      PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperBuy(timeframe, rainbow.m_ma3, "rainbow");
+      swingBuy(timeframe, rainbow.m_ma3, "rainbow");
    } else if (m_sellSetupOk == true && tc.current == TREND_NEGATIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down on overbought territory
-      PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperSell(timeframe, rainbow.m_ma3, "rainbow");
+      swingSell(timeframe, rainbow.m_ma3, "rainbow");
    }
 }
 
-void AlphaVisionTraderSwing::scalperBuy(int timeframe, double signalPrice, string signalOrigin="") {
+void AlphaVisionTraderSwing::swingBuy(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
@@ -118,7 +125,7 @@ void AlphaVisionTraderSwing::scalperBuy(int timeframe, double signalPrice, strin
    safeGoLong(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SWNG-%s-lmt", signalOrigin));
 }
 
-void AlphaVisionTraderSwing::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
+void AlphaVisionTraderSwing::swingSell(int timeframe, double signalPrice, string signalOrigin="") {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 

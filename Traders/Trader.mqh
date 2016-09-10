@@ -241,7 +241,7 @@ void Trader::closeLongs(int timeframe, string reason="") {
    double closePrice = Bid;
    int oCount = longPs.count();
    PositionValue fullPosition = longPs.meanPositionValue();
-   reason = StringFormat("%s[%d]", timeframe);
+   reason = StringFormat("%s[%d]", reason, timeframe);
    
    if (reason != "") PrintFormat("[Trader.closeLongs] Closing %d longs: %s", oCount, reason);
    if (oCount > 0) 
@@ -260,7 +260,7 @@ void Trader::closeShorts(int timeframe, string reason="") {
    double closePrice = Ask;
    int oCount = shortPs.count();
    PositionValue fullPosition = shortPs.meanPositionValue();
-   reason = StringFormat("%s[%d]", timeframe);
+   reason = StringFormat("%s[%d]", reason, timeframe);
    
    if (reason != "") PrintFormat("[Trader.closeShorts] Closing %d shorts: %s", oCount, reason);
    if (oCount > 0)

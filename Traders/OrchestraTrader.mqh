@@ -59,17 +59,17 @@ void AlphaVisionTraderOrchestra::onSignalValidation(int timeframe) {
       onSignalTrade(timeframe);
    } else if (rSlow.current == TREND_POSITIVE) { // Positive trend
       if (rSlow.changed) {
-         Alert(StringFormat("[Trader/%s] %s signal changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe), 
+         Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe), 
                             EnumToString((TRENDS) rSlow.current)));
-         if (stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive", timeframe));
+         if (stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
       onSignalTrade(timeframe);
-   } else if (rSlow.current == TREND_POSITIVE) { // Negative trend
+   } else if (rSlow.current == TREND_NEGATIVE) { // Negative trend
       if (rSlow.changed) {
          Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe),
                             EnumToString((TRENDS) rSlow.current)));
-         if (stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative", timeframe));
+         if (stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
       onSignalTrade(timeframe);

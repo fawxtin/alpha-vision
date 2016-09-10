@@ -16,6 +16,7 @@
 class AlphaVisionTrader : public Trader {
    protected:
       AlphaVisionSignals *m_signals;
+      int m_volatility;
       bool m_buySetupOk;
       bool m_sellSetupOk;
 
