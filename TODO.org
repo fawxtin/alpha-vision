@@ -35,50 +35,15 @@
     DEADLINE: <2016-09-03 sáb>
     Trend Types:
     - trending <- move neutral / bull / bear
-      - HMA
-      - BB channel
-      - MACD
+      HMA / BB channel / MACD
     - move strength <- play validation
-      - Stochastic
-      - BB above/bellow std2
+      Stochastic / BB above/bellow std2
     - pivot levels <- play positions lines
-      - Pivot
-      - Fibonacci
-      - MAs
-      - BB top/middle/bottom lines
+      Pivot / Fibonacci / MAs / BB top/middle/bottom lines
     - volatility <- play type scalp / breakout
-      - ATR
-      - Chaikin
+      ATR / Chaikin
     - signals <- whether it shall put an order
-      - HMA periods cross
-      - MACD main & signal cross
-      - Stochastic main & signal cross
-
-    Algorithm Trader Structure Orchestra 01 (Simpler):
-      1) onSignalTrade
-      2) validates signal throught trend/strength
-	 - signal vs trend/strength
-      3) onVolatility set trade type
-	 - onScalpTrade
-	 - onBreakoutTrade
-      4) using pivot levels set entry / stop / target position
-	 - onScalpTradeBuy
-	 - onScalpTradeSell
-	 - onBreakoutTradeBuy
-	 - onBreakoutTradeSell
-
-    Algorithm Trader Structure Orchestra 02 (different signals for different volatility):
-      1) onVolatility set trade type
-      2) onSignalTrade <- different signals for different trade type (scalp/breakout)
-	 - onSignalTradeScalp
-	 - onSignalTradeBreakout
-      3) validates signal throught trend/strength
-	 - signal vs trend/strength
-      4) using pivot levels set entry / stop / target position
-	 - onScalpTradeBuy
-	 - onScalpTradeSell
-	 - onBreakoutTradeBuy
-	 - onBreakoutTradeSell
+      HMA periods cross / MACD main & signal cross / Stochastic main & signal cross
 
     Algorithm Types:
     - Trend inclined (use major/current/fast trends)
@@ -101,8 +66,6 @@ Stoch signal|main (21, 45) <- sets whether it shall pull the trigger
 
 **** TODO Update existing positions
 
-*** DONE Refactor SignalChange to TrendChange
-
 *** Risk & Reward Optimization
 
 ** Signals Comparison
@@ -111,8 +74,9 @@ Stoch signal|main (21, 45) <- sets whether it shall pull the trigger
      =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
      =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
 
-*** TODO Elaborate rule of symbols to use on different trade signals
-    DEADLINE: <2016-09-07 qua>
+*** TODO Algorithmic exits on bad entries
+     on Overbought/Oversold entries going against it, can workout
+     some good exits
 
 *** TODO Check/compare different algorithm trade signals
     Those implemented on Trader Algorithms

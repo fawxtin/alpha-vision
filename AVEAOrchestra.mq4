@@ -5,15 +5,11 @@
 //+------------------------------------------------------------------+
 #property copyright "fawxtin"
 #property link      "https://www.mql5.com"
-#property version   "1.001"
+#property version   "1.002"
 #property strict
 
-//#include <Traders\SimpleTrader.mqh>
-//#include <Traders\PNNTrader.mqh>
-#include <Traders\OrchestraTrader.mqh>
-
 #include <Signals\AlphaVision.mqh>
-
+#include <Traders\OrchestraTrader.mqh>
 
 ////
 //// INPUTS
@@ -24,29 +20,6 @@ input bool iIsTest = false;
 input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
-
-/*
- * Create an AlphaVision class that handles with:
- *    - HMA minor/major trend (current time interval)
- *    - HMA minor/major trend (higher time interval / given by input)
- *    - BB std2/std3 trends (current time interval)
- *    - BB std2/std3 trends (higher time interval)
- *    - ATR (current time interval)
- *    - ATR (higher time interval)
- *    - calculate support / resistence ? use BB?
- *
- * Calculate possible entry points, given mixed data:
- *    - HMA cross
- *    - BB bottom/top
- *    - BB crossing MA (changing tunnels)
- *    - BB overtops/overbottoms (reverses) 
- * 
- * Calculate Risk & Reward ratio (check if entry point is good/valid):
- *    - Volatility
- *    - ATR
- *    - Stochastic?
- *
- */
 
 ////
 //// GLOBALS
