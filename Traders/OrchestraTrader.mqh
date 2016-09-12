@@ -29,11 +29,13 @@ void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
+   RainbowTrend *rainbowHiSlow = avHi.m_rainbowSlow;
 
-   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+   // XXX considering using higher timeframe rainbowSlow as another trend check
+   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD || rainbowHiSlow.getTrend() == TREND_NEGATIVE) {
       m_buySetupOk = false;
       m_sellSetupOk = true;
-   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD || rainbowHiSlow.getTrend() == TREND_POSITIVE) {
       m_buySetupOk = true;
       m_sellSetupOk = false;
    } else if (m_buySetupOk == false || m_sellSetupOk == false) {
@@ -82,14 +84,14 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
    
-   if (rFast.changed == true && m_buySetupOk && 
-       rFast.current == TREND_POSITIVE && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
+   if (rFast.changed == true && m_buySetupOk && rFast.current == TREND_POSITIVE && 
+       stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
       orchestraBuy(timeframe, rainbowFast.m_ma3, "rainbow");
    } else if (m_buySetupOk && macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
               stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
       orchestraBuy(timeframe, rainbowFast.m_ma3, "macd");
-   } else if (rFast.changed == true && m_sellSetupOk &&
-              rFast.current == TREND_NEGATIVE && stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
+   } else if (rFast.changed == true && m_sellSetupOk && rFast.current == TREND_NEGATIVE && 
+              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
       orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
    } else if (m_sellSetupOk && macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
               stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down

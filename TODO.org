@@ -12,26 +12,16 @@
 ** Trends
    Calculate trends: BB; HMA; ATR; Stochastic; MACD
 
-*** DONE Enum for Trends
-    DEADLINE: <2016-08-26 sex>
-
-*** DONE Implement missing indicators on AV
-    DEADLINE: <2016-08-26 sex>
-    - ok ATR
-    - ok Stochastic
-    - ok MACD
-    - RSI?
-
-*** DONE Log rotate positions csv
-    - create a Log class that can also send email or update spreadsheets
-    - flush file handler (work)
+*** TODO flush file handler
 
 *** TODO provide a trend input structure / for each trend type
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
-*** Trader Algorithms
+*** TODO Organize trader algorithms
+
+*** Improve Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
     Trend Types:
     - trending <- move neutral / bull / bear
@@ -53,16 +43,9 @@
     - Orchestra: macd for signals, stochastic for confirmation (overbought/oversold)
       and BB for entry/exit points.
 
-**** Scalper algorithm
-
-ATR (14 / 80) <- sets volatility | whether it should scalp or trend
-HMA trend (20, 50 / 50, 200) <- sets trend neutral/positive/negative
-BB trend (BB2 / BB3 / BB4) <- sets entry exit points
-Stoch signal|main (21, 45) <- sets whether it shall pull the trigger
-
 *** Trader timeframes
 
-**** TODO pass positions to different timeframes handlers
+**** TODO pass positions to different timeframes handlers?
 
 **** TODO Update existing positions
 
@@ -83,5 +66,10 @@ Stoch signal|main (21, 45) <- sets whether it shall pull the trigger
 
 ** MQL
 
-*** use external DLLs
+*** TODO python script to update results to google spreadsheets
+    DEADLINE: <2016-09-11 Dom>
+
+*** TODO use external DLLs - try with R package
+    DEADLINE: <2016-09-24 Sáb>
+
 *** Flux Signals
