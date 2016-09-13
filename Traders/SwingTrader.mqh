@@ -7,6 +7,12 @@
 #property link      "https://www.mql5.com"
 #property strict
 
+/*
+ * Swing Trader shall accumulate positions and do scale in and scale out
+ * according to current trend.
+ *
+ */
+
 #include <Traders\AlphaVisionTrader.mqh>
 
 #define STOCH_OVERSOLD_THRESHOLD 35

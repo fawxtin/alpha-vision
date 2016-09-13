@@ -19,6 +19,12 @@
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
+
+*** TODO do *not* open new position near current placed position
+    sometimes multiple signals are sent on same bet, creating
+    multiple positions with almost the same entry/exit price.
+
+ 
 *** TODO Organize trader algorithms
 
 *** Improve Trader Algorithms
