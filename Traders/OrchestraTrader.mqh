@@ -11,6 +11,7 @@
 
 #define STOCH_OVERSOLD_THRESHOLD 35
 #define STOCH_OVERBOUGHT_THRESHOLD 65
+#define STOCH_OVERREGION 10
 #define MIN_RISK_AND_REWARD_RATIO 2
 
 class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
@@ -31,17 +32,20 @@ void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
    StochasticTrend *stochHi = avHi.m_stoch;
    RainbowTrend *rainbowHiSlow = avHi.m_rainbowSlow;
 
-   // XXX considering using higher timeframe rainbowSlow as another trend check
-   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD || rainbowHiSlow.getTrend() == TREND_NEGATIVE) {
-      m_buySetupOk = false;
-      m_sellSetupOk = true;
-   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD || rainbowHiSlow.getTrend() == TREND_POSITIVE) {
-      m_buySetupOk = true;
-      m_sellSetupOk = false;
-   } else if (m_buySetupOk == false || m_sellSetupOk == false) {
-      m_buySetupOk = true;
-      m_sellSetupOk = true;
-   }
+   m_buySetupOk = true;
+   m_sellSetupOk = true;
+   
+   // RainbowSlow trending
+   if (rainbowHiSlow.getTrend() == TREND_NEGATIVE) m_buySetupOk = false;
+   if (rainbowHiSlow.getTrend() == TREND_POSITIVE) m_sellSetupOk = false;
+   
+   /// Strength
+   // Overbought regions
+   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) m_buySetupOk = false;
+   if (stochHi.m_signal >= (STOCH_OVERBOUGHT_THRESHOLD + STOCH_OVERREGION)) m_sellSetupOk = true;
+   // Oversold regions
+   if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) m_sellSetupOk = false;
+   if (stochHi.m_signal <= (STOCH_OVERSOLD_THRESHOLD - STOCH_OVERREGION)) m_buySetupOk = true;
    
    onSignalValidation(timeframe);
 }

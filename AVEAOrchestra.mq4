@@ -21,6 +21,7 @@ input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
+
 ////
 //// GLOBALS
 ////
