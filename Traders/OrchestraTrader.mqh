@@ -111,11 +111,11 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
                  stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          orchestraSell(timeframe, rainbowFast.m_ma3, "macd");
       } else if (rainbowSlow.m_cross_1_2.changed && rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma2, "hma12");
+         orchestraSell(timeframe, rainbowSlow.m_ma2, "hma12");
       } else if (rainbowSlow.m_cross_1_3.changed && rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma13");
+         orchestraSell(timeframe, rainbowSlow.m_ma3, "hma13");
       } else if (rainbowSlow.m_cross_2_3.changed && rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma23");
+         orchestraSell(timeframe, rainbowSlow.m_ma3, "hma23");
       }
    }
 }
