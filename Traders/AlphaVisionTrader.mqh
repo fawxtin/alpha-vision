@@ -19,10 +19,12 @@ class AlphaVisionTrader : public Trader {
       int m_volatility;
       bool m_buySetupOk;
       bool m_sellSetupOk;
+      double m_riskAndRewardRatio;
 
    public:
-      AlphaVisionTrader(AlphaVisionSignals *signals) {
+      AlphaVisionTrader(AlphaVisionSignals *signals, double riskAndRewardRatio=2.0) {
          m_signals = signals;
+         m_riskAndRewardRatio = riskAndRewardRatio;
          m_buySetupOk = false;
          m_sellSetupOk = false;
       }

@@ -12,11 +12,11 @@
 #define STOCH_OVERSOLD_THRESHOLD 35
 #define STOCH_OVERBOUGHT_THRESHOLD 65
 #define STOCH_OVERREGION 10
-#define MIN_RISK_AND_REWARD_RATIO 2
+
 
 class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals): AlphaVisionTrader(signals) { }
+      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) { }
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalValidation(int timeframe);
@@ -89,7 +89,7 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
    
-   if (m_buySetupOk) { // BUY SETUP
+   if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
          orchestraBuy(timeframe, rainbowFast.m_ma3, "rainbow");
@@ -105,7 +105,7 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
       }
    }
    
-   if (m_sellSetupOk) { // SELL SETUP
+   if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) { // SELL SETUP
       if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
           stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
@@ -135,8 +135,8 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice,
    double target = bb.m_bbTop;
    double stopLoss = bb3.m_bbBottom - m_mkt.vspread;
    
-   safeGoLong(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("ORCH-%s-mkt", signalOrigin));
-   safeGoLong(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("ORCH-%s-lmt", signalOrigin));
+   safeGoLong(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
+   safeGoLong(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));
 }
 
 void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice, string signalOrigin="") {
@@ -152,6 +152,6 @@ void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice
    double target = bb.m_bbBottom;
    double stopLoss = bb3.m_bbTop + m_mkt.vspread;
    
-   safeGoShort(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("ORCH-%s-mkt", signalOrigin));
-   safeGoShort(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("ORCH-%s-lmt", signalOrigin));
+   safeGoShort(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
+   safeGoShort(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));
 }
