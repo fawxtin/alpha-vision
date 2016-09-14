@@ -13,9 +13,10 @@
    Calculate trends: BB; HMA; ATR; Stochastic; MACD
 
 *** TODO Debug signals
-    eurusd 4h: 18-19/08 hma12 cross down
-    eurusd 4h: 23-25/08 hma13 cross down
-    usdjpy 1h: 7/09     macd cross up
+    eurusd 4h: 18-19/8 hma12 cross down
+    eurusd 4h: 23-25/8 hma13 cross down
+    usdjpy 1h: 7/9     macd cross up
+    usdjpy 1h: 2/8     macd cross up
 
 *** TODO flush file handler
 

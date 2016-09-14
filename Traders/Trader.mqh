@@ -31,7 +31,7 @@ class Trader {
       Hash *m_shortPositions;
       Hash *m_barLong;
       Hash *m_barShort;
-
+      double m_lotSize;
       string m_logDir;
 
       bool isBarMarked(string longOrShort, int timeframe);
@@ -41,7 +41,8 @@ class Trader {
       string getTimeFrameKey(int timeframe) { return EnumToString((ENUM_TIMEFRAMES) timeframe); }
 
    public:
-      Trader() {
+      Trader(double lotSize=0.01) {
+         m_lotSize = lotSize;
          m_longPositions = new Hash(193, true);
          m_shortPositions = new Hash(193, true);
          m_barLong = new Hash(193, true);
@@ -56,6 +57,10 @@ class Trader {
          delete m_shortPositions;
          delete m_barLong;
          delete m_barShort;
+      }
+      
+      void setLotSize(double lotSize) {
+         m_lotSize = lotSize;
       }
       
       /// positions handlers
@@ -178,15 +183,15 @@ void Trader::goLong(int timeframe, double signalPrice, double targetPrice=0, dou
    string orderType = "market";
    if (MathAbs(marketPrice - signalPrice) < m_mkt.vspread) { // buy market
       PrintFormat("[Trader.goLong/%s] opening At market (%.4f, %.4f)", reason, signalPrice, marketPrice);
-      ticket = OrderSend(Symbol(), OP_BUY, LOT_SIZE, marketPrice, 3, stopLoss, targetPrice, reason, MAGICMA + timeframe, 0, clrAliceBlue);
+      ticket = OrderSend(Symbol(), OP_BUY, m_lotSize, marketPrice, 3, stopLoss, targetPrice, reason, MAGICMA + timeframe, 0, clrAliceBlue);
    } else if (signalPrice < marketPrice) { // buy limit
       PrintFormat("[Trader.goLong/%s] opening Limit at %.4f", reason, signalPrice);
-      ticket = OrderSend(Symbol(), OP_BUYLIMIT, LOT_SIZE, signalPrice, 3,
+      ticket = OrderSend(Symbol(), OP_BUYLIMIT, m_lotSize, signalPrice, 3,
                          stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
       orderType = "limit";
    } else {// buy stop
       PrintFormat("[Trader.goLong/%s] opening Stop at %.4f", reason, signalPrice);
-      ticket = OrderSend(Symbol(), OP_BUYSTOP, LOT_SIZE, signalPrice, 3,
+      ticket = OrderSend(Symbol(), OP_BUYSTOP, m_lotSize, signalPrice, 3,
                          stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
       orderType = "stop";
    }
@@ -214,16 +219,16 @@ void Trader::goShort(int timeframe, double signalPrice, double targetPrice=0, do
    string orderType = "market";
    if (MathAbs(signalPrice - marketPrice) < m_mkt.vspread) { // sell market
       PrintFormat("[Trader.goShort/%s] opening At market (%.4f, %.4f)", reason, signalPrice, marketPrice);
-      ticket = OrderSend(Symbol(), OP_SELL, LOT_SIZE, marketPrice, 3, stopLoss, targetPrice, reason, MAGICMA + timeframe, 0, clrPink);
+      ticket = OrderSend(Symbol(), OP_SELL, m_lotSize, marketPrice, 3, stopLoss, targetPrice, reason, MAGICMA + timeframe, 0, clrPink);
    } else if (signalPrice > marketPrice) { // sell limit
       PrintFormat("[Trader.goShort/%s] opening Limit at %.4f", reason, signalPrice);
       orderType = "limit";
-      ticket = OrderSend(Symbol(), OP_SELLLIMIT, LOT_SIZE, signalPrice, 3,
+      ticket = OrderSend(Symbol(), OP_SELLLIMIT, m_lotSize, signalPrice, 3,
                          stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrPink);
    } else { // sell stop
       PrintFormat("[Trader.goShort/%s opening Stop at %.4f", reason, signalPrice);
       orderType = "stop";
-      ticket = OrderSend(Symbol(), OP_SELLSTOP, LOT_SIZE, signalPrice, 3,
+      ticket = OrderSend(Symbol(), OP_SELLSTOP, m_lotSize, signalPrice, 3,
                          stopLoss, targetPrice, reason, MAGICMA + timeframe, expires, clrAliceBlue);
    }
    

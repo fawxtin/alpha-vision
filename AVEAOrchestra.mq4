@@ -21,6 +21,7 @@ input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
+input double iLotSize = 0.01;
 input double iRiskAndRewardRatio = 2.0;
 
 input bool iTradeFastP = true;
@@ -68,6 +69,7 @@ int OnInit() {
 
    // loading current positions
    gTrader = new AlphaVisionTraderOrchestra(avSignals, iRiskAndRewardRatio);
+   gTrader.setLotSize(iLotSize);
    if (iTradeFastP) gTrader.loadCurrentOrders(gSignalTF.fast);
    if (iTradeCurrentP) gTrader.loadCurrentOrders(gSignalTF.current);
    if (iTradeMajorP) gTrader.loadCurrentOrders(gSignalTF.major);
