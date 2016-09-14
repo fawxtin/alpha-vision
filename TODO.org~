@@ -5,46 +5,55 @@
 ** Learning Techniques
 *** Ralph Vince - Mathematics for Market
     DEADLINE: <2016-09-28 qua>
-    Provide a resume on the subject.
+    Provide a schedule and a resume on the subject.
 
 *** Quantitative Trading and Money Management
 
 ** Trends
    Calculate trends: BB; HMA; ATR; Stochastic; MACD
 
-*** DONE Enum for Trends
-    DEADLINE: <2016-08-26 sex>
-
-*** DONE Implement missing indicators on AV
-    DEADLINE: <2016-08-26 sex>
-    - ok ATR
-    - ok Stochastic
-    - ok MACD
-    - RSI?
+*** TODO flush file handler
 
 *** TODO provide a trend input structure / for each trend type
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
 
-*** Trader Algorithms
+
+*** TODO do *not* open new position near current placed position
+    sometimes multiple signals are sent on same bet, creating
+    multiple positions with almost the same entry/exit price.
+
+ 
+*** TODO Organize trader algorithms
+
+*** Improve Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
+    Trend Types:
+    - trending <- move neutral / bull / bear
+      HMA / BB channel / MACD
+    - move strength <- play validation
+      Stochastic / BB above/bellow std2
+    - pivot levels <- play positions lines
+      Pivot / Fibonacci / MAs / BB top/middle/bottom lines
+    - volatility <- play type scalp / breakout
+      ATR / Chaikin
+    - signals <- whether it shall put an order
+      HMA periods cross / MACD main & signal cross / Stochastic main & signal cross
+
+    Algorithm Types:
     - Trend inclined (use major/current/fast trends)
     - TradingRange Helper! (signals with support&resistance levels)
-    - Scalper (using only fast trends)
-    - Swinger (using support&resistence levels / higher targets and stopLosses)
+    - Scalper (low volatility under fast timeframes)
+    - Swinger (higher volatility & using pivot levels on slower timeframes)
     - Orchestra: macd for signals, stochastic for confirmation (overbought/oversold)
       and BB for entry/exit points.
 
 *** Trader timeframes
 
-**** TODO pass positions to different timeframes handlers
+**** TODO pass positions to different timeframes handlers?
 
 **** TODO Update existing positions
-
-*** TODO Orders Pool?
-
-*** DONE Refactor SignalChange to TrendChange
 
 *** Risk & Reward Optimization
 
@@ -54,13 +63,19 @@
      =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
      =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
 
-*** TODO Elaborate rule of symbols to use on different trade signals
-    DEADLINE: <2016-08-28 dom>
+*** TODO Algorithmic exits on bad entries
+     on Overbought/Oversold entries going against it, can workout
+     some good exits
 
 *** TODO Check/compare different algorithm trade signals
     Those implemented on Trader Algorithms
 
 ** MQL
 
-*** use external DLLs
+*** TODO python script to update results to google spreadsheets
+    DEADLINE: <2016-09-11 Dom>
+
+*** TODO use external DLLs - try with R package
+    DEADLINE: <2016-09-24 Sáb>
+
 *** Flux Signals

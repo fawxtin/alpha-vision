@@ -69,21 +69,31 @@ void RainbowTrend::calculateCrossing(void) {
    double m_ma3_i = iCustom(NULL, m_timeframe, "hma", m_period3, 0, MODE_LWMA, PRICE_TYPICAL, 0, 1);
 
    // Cross 1x2
-   if (m_ma1_i < m_ma2_i && m_ma1 > m_ma2) updateTrendChange(m_cross_1_2, TREND_POSITIVE);
-   else if (m_ma1_i > m_ma2_i && m_ma1 < m_ma2) updateTrendChange(m_cross_1_2, TREND_NEGATIVE);
-   else if (m_cross_1_2.changed) m_cross_1_2.changed = false;
+   if (m_ma1 > m_ma2) { // Positive context
+      if (m_ma1_i < m_ma2_i) updateTrendChange(m_cross_1_2, TREND_POSITIVE_FROM_NEGATIVE);
+      else updateTrendChange(m_cross_1_2, TREND_POSITIVE);
+   } else { // Negative context
+      if (m_ma1_i > m_ma2_i) updateTrendChange(m_cross_1_2, TREND_NEGATIVE_FROM_POSITIVE);
+      else updateTrendChange(m_cross_1_2, TREND_NEGATIVE);
+   }
       
    // Cross 1x3
-   updateTrendChange(m_cross_1_3, m_cross_1_3.current);
-   if (m_ma1_i < m_ma3_i && m_ma1 > m_ma3) updateTrendChange(m_cross_1_3, TREND_POSITIVE);
-   else if (m_ma1_i > m_ma3_i && m_ma1 < m_ma3) updateTrendChange(m_cross_1_3, TREND_NEGATIVE);
-   else if (m_cross_1_3.changed) m_cross_1_3.changed = false;
+   if (m_ma1 > m_ma3) { // Positive context
+      if (m_ma1_i < m_ma3_i) updateTrendChange(m_cross_1_3, TREND_POSITIVE_FROM_NEGATIVE);
+      else updateTrendChange(m_cross_1_3, TREND_POSITIVE);
+   } else { // Negative context
+      if (m_ma1_i > m_ma3_i) updateTrendChange(m_cross_1_3, TREND_NEGATIVE_FROM_POSITIVE);
+      else updateTrendChange(m_cross_1_3, TREND_NEGATIVE);
+   }
    
    // Cross 2x3
-   updateTrendChange(m_cross_2_3, m_cross_2_3.current);
-   if (m_ma2_i < m_ma3_i && m_ma2 > m_ma3) updateTrendChange(m_cross_2_3, TREND_POSITIVE);
-   else if (m_ma2_i > m_ma3_i && m_ma2 < m_ma3) updateTrendChange(m_cross_2_3, TREND_NEGATIVE);
-   else if (m_cross_2_3.changed) m_cross_2_3.changed = false;
+   if (m_ma2 > m_ma3) { // Positive context
+      if (m_ma2_i < m_ma3_i) updateTrendChange(m_cross_2_3, TREND_POSITIVE_FROM_NEGATIVE);
+      else updateTrendChange(m_cross_2_3, TREND_POSITIVE);
+   } else { // Negative context
+      if (m_ma2_i > m_ma3_i) updateTrendChange(m_cross_2_3, TREND_NEGATIVE_FROM_POSITIVE);
+      else updateTrendChange(m_cross_2_3, TREND_NEGATIVE);
+   }
 }
 
 #endif

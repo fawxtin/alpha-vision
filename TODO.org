@@ -12,6 +12,10 @@
 ** Trends
    Calculate trends: BB; HMA; ATR; Stochastic; MACD
 
+*** TODO Debug signals
+    eurusd 4h: 18-19/08 hma12 cross down
+    eurusd 4h: 23-25/08 hma13 cross down
+
 *** TODO flush file handler
 
 *** TODO provide a trend input structure / for each trend type

@@ -96,25 +96,27 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
       } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
                  stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
          orchestraBuy(timeframe, rainbowFast.m_ma3, "macd");
-      } else if (rainbowSlow.m_cross_1_2.changed && rainbowSlow.m_cross_1_2.current == TREND_POSITIVE) {
+      } else if (rainbowSlow.m_cross_1_2.current == TREND_POSITIVE_FROM_NEGATIVE) {
          orchestraBuy(timeframe, rainbowSlow.m_ma2, "hma12");
-      } else if (rainbowSlow.m_cross_1_3.changed && rainbowSlow.m_cross_1_3.current == TREND_POSITIVE) {
+      } else if (rainbowSlow.m_cross_1_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
          orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma13");
-      } else if (rainbowSlow.m_cross_2_3.changed && rainbowSlow.m_cross_2_3.current == TREND_POSITIVE) {
+      } else if (rainbowSlow.m_cross_2_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
          orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma23");
       }
-   } else if (m_sellSetupOk) { // SELL SETUP
+   }
+   
+   if (m_sellSetupOk) { // SELL SETUP
       if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
           stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
-      } else if (m_sellSetupOk && macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
+      } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
                  stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          orchestraSell(timeframe, rainbowFast.m_ma3, "macd");
-      } else if (rainbowSlow.m_cross_1_2.changed && rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE) {
+      } else if (rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE_FROM_POSITIVE) {
          orchestraSell(timeframe, rainbowSlow.m_ma2, "hma12");
-      } else if (rainbowSlow.m_cross_1_3.changed && rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE) {
+      } else if (rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
          orchestraSell(timeframe, rainbowSlow.m_ma3, "hma13");
-      } else if (rainbowSlow.m_cross_2_3.changed && rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE) {
+      } else if (rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
          orchestraSell(timeframe, rainbowSlow.m_ma3, "hma23");
       }
    }
