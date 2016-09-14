@@ -82,24 +82,41 @@ void AlphaVisionTraderOrchestra::onSignalValidation(int timeframe) {
 void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowFast = av.m_rainbowFast;
+   RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
    MACDTrend *macd = av.m_macd;
 
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
    
-   if (rFast.changed == true && m_buySetupOk && rFast.current == TREND_POSITIVE && 
-       stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, rainbowFast.m_ma3, "rainbow");
-   } else if (m_buySetupOk && macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
-              stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-      orchestraBuy(timeframe, rainbowFast.m_ma3, "macd");
-   } else if (rFast.changed == true && m_sellSetupOk && rFast.current == TREND_NEGATIVE && 
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
-   } else if (m_sellSetupOk && macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-      orchestraSell(timeframe, rainbowFast.m_ma3, "macd");
+   if (m_buySetupOk) { // BUY SETUP
+      if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
+          stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
+         orchestraBuy(timeframe, rainbowFast.m_ma3, "rainbow");
+      } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
+                 stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
+         orchestraBuy(timeframe, rainbowFast.m_ma3, "macd");
+      } else if (rainbowSlow.m_cross_1_2.changed && rainbowSlow.m_cross_1_2.current == TREND_POSITIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma2, "hma12");
+      } else if (rainbowSlow.m_cross_1_3.changed && rainbowSlow.m_cross_1_3.current == TREND_POSITIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma13");
+      } else if (rainbowSlow.m_cross_2_3.changed && rainbowSlow.m_cross_2_3.current == TREND_POSITIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma23");
+      }
+   } else if (m_sellSetupOk) { // SELL SETUP
+      if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
+          stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
+         orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
+      } else if (m_sellSetupOk && macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
+                 stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
+         orchestraSell(timeframe, rainbowFast.m_ma3, "macd");
+      } else if (rainbowSlow.m_cross_1_2.changed && rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma2, "hma12");
+      } else if (rainbowSlow.m_cross_1_3.changed && rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma13");
+      } else if (rainbowSlow.m_cross_2_3.changed && rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE) {
+         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma23");
+      }
    }
 }
 

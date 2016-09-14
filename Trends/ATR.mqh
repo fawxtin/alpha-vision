@@ -23,7 +23,6 @@
 
 class ATRdelta : public Trend {
    public:
-      int m_timeframe;
       int m_period1;
       int m_period2;
       double m_atr1;

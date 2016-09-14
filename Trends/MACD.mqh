@@ -24,7 +24,6 @@ class MACDTrend : public Trend {
       int m_crossBarDown;
     
    public:
-      int m_timeframe;
       int m_pFast;
       int m_pSlow;
       int m_pSma;

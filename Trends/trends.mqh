@@ -28,39 +28,45 @@ enum TRENDS {
 };
 
 struct TrendChange {
-   int last;
-   int current;
-   bool changed;
+   public:
+      int last;
+      int current;
+      bool changed;
+      
+      TrendChange() { last = TREND_EMPTY; current = TREND_EMPTY; changed = false; }
 };
 
-// TODO: create a class that keeps trend values
+void updateTrendChange(TrendChange &trendHst, int trend) {
+   if (trendHst.current == TREND_EMPTY) {
+      trendHst.current = trend;
+      trendHst.last = trend;
+   } else if (trendHst.current != trend) {
+      trendHst.last = trendHst.current;
+      trendHst.current = trend;
+      trendHst.changed = true;
+   } else if (trendHst.changed) trendHst.changed = false;
+}
 
 class Trend {
    protected:
       //int m_lastTrend;
+      int m_timeframe;
       int m_trend;
       string m_trendType;
       TrendChange m_trendHst;
       
    public:
       Trend() { m_trend = TREND_EMPTY; };
+      
       int getTrend() { return m_trend; };
       
       TrendChange getTrendHst() { return m_trendHst; }
       
       void setTrendHst(int trend) {
          m_trend = trend;
-         if (m_trendHst.current == TREND_EMPTY) {
-            m_trendHst.current = trend;
-            m_trendHst.last = trend;
-         } else if (m_trendHst.current != trend) {
-            m_trendHst.last = m_trendHst.current;
-            m_trendHst.current = trend;
-            m_trendHst.changed = true;
-         } else if (m_trendHst.changed) m_trendHst.changed = false;
+         updateTrendChange(m_trendHst, trend);
       }
 
-      //bool setTrend(int 
       string simplify();
       virtual void calculate() { m_trend = TREND_NEUTRAL; };
       virtual void alert();

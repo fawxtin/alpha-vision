@@ -22,7 +22,6 @@ class StochasticTrend : public Trend {
     * (default) 21 / 45
     */
    public:
-      int m_timeframe;
       int m_KPeriod;
       int m_DPeriod;
       double m_main;
