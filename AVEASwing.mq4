@@ -22,28 +22,8 @@ input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
-/*
- * Create an AlphaVision class that handles with:
- *    - HMA minor/major trend (current time interval)
- *    - HMA minor/major trend (higher time interval / given by input)
- *    - BB std2/std3 trends (current time interval)
- *    - BB std2/std3 trends (higher time interval)
- *    - ATR (current time interval)
- *    - ATR (higher time interval)
- *    - calculate support / resistence ? use BB?
- *
- * Calculate possible entry points, given mixed data:
- *    - HMA cross
- *    - BB bottom/top
- *    - BB crossing MA (changing tunnels)
- *    - BB overtops/overbottoms (reverses) 
- * 
- * Calculate Risk & Reward ratio (check if entry point is good/valid):
- *    - Volatility
- *    - ATR
- *    - Stochastic?
- *
- */
+input double iLotSize = 0.01;
+input double iRiskAndRewardRatio = 2.0;
 
 ////
 //// GLOBALS
@@ -56,8 +36,8 @@ int gCountTicks;
 
 
 int OnInit() {
-   gSignalTF.current = Period();
    gSignalTF.fast = iFastTimeFrame;
+   gSignalTF.current = Period();
    gSignalTF.major = iMajorTimeFrame;
    gSignalTF.super = iSuperTimeFrame;
    
@@ -79,10 +59,13 @@ int OnInit() {
    avSignals.calculateOn(gSignalTF.major);
    avSignals.initOn(gSignalTF.super);
    avSignals.calculateOn(gSignalTF.super);
+   avSignals.initOn(PERIOD_MN1);
+   avSignals.calculateOn(PERIOD_MN1);
 
 
    // loading current positions
-   gTrader = new AlphaVisionTraderSwing(avSignals);
+   gTrader = new AlphaVisionTraderSwing(avSignals, iRiskAndRewardRatio);
+   gTrader.setLotSize(iLotSize);
    //gTrader.loadCurrentOrders(gSignalTF.fast);
    gTrader.loadCurrentOrders(gSignalTF.current);
    gTrader.loadCurrentOrders(gSignalTF.major);
@@ -149,14 +132,14 @@ void OnTick() {
       return;
    }
    // remove already closed orders
-   //gTrader.cleanOrders(gSignalTF.fast);
+   gTrader.cleanOrders(gSignalTF.fast);
    gTrader.cleanOrders(gSignalTF.current);
    gTrader.cleanOrders(gSignalTF.major);
    gTrader.cleanOrders(gSignalTF.super);
    
    AlphaVisionSignals *signals = gTrader.getSignals();
-   //signals.calculateOn(gSignalTF.fast);
-   //gTrader.onTrendSetup(gSignalTF.fast); - disabled trading fast track
+   signals.calculateOn(gSignalTF.fast);
+   gTrader.onTrendSetup(gSignalTF.fast);
    
    if (iIsTest) {
       //signals.calculateOn(gSignalTF.current);
