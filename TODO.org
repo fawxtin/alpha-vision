@@ -24,6 +24,22 @@
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
+   onTrendSetup
+       |
+    sets trend and close counter trend positions
+       |
+   onTrendValidation
+       |
+     m_buy/sellSetupOk
+       |
+   onSignalTrade
+       |
+     look for indicators signals
+       |
+   onBuySignal | onSellSignal
+       |
+     calculates entry/exit points
+   
 
 
 *** TODO do *not* open new position near current placed position
@@ -31,7 +47,8 @@
     multiple positions with almost the same entry/exit price.
 
  
-*** TODO Organize trader algorithms
+*** TODO Work on Pivots
+    Another level of entry type. Can calculate probabilities on it.
 
 *** Improve Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
@@ -66,8 +83,8 @@
 ** Signals Comparison
    Calculate and use Trends to capture signals.
    - SpreadSheet results formula:
-     =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
-     =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
+     =sum(FILTER(H2:H, I2:I <> "cancelled", D2:D > "2000.01.01 00:00:00"))
+     =sum(filter(N2:N, regexmatch(O2:O, "[5]")))
 
 *** TODO Algorithmic exits on bad entries
      on Overbought/Oversold entries going against it, can workout

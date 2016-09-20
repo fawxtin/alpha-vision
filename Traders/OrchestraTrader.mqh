@@ -14,22 +14,24 @@ class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
    public:
       AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) { }
       
-      virtual void onTrendValidation(int timeframe);
+      virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe, int trend);
-      void orchestraBuy(int timeframe, double signalPrice, string signalOrigin="");
-      void orchestraSell(int timeframe, double signalPrice, string signalOrigin="");
+      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="");
+      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
+///
 /// Using RainbowSlow as MAIN Trend
-void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
+///
+void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
 
    TrendChange rSlow = rainbowSlow.getTrendHst();
    if (rSlow.current == TREND_NEUTRAL) { // Neutral trend
-      onSignalTrade(timeframe, TREND_NEUTRAL);
+      ;
    } else if (rSlow.current == TREND_POSITIVE) { // Positive trend
       if (rSlow.changed) {
          Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe), 
@@ -38,7 +40,6 @@ void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
          // TODO: else update current positions stoploss and sell more
       }
       //if (m_sellSetupOk) m_sellSetupOk = false; - safer positioning
-      onSignalTrade(timeframe, TREND_POSITIVE);
    } else if (rSlow.current == TREND_NEGATIVE) { // Negative trend
       if (rSlow.changed) {
          Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe),
@@ -47,8 +48,9 @@ void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
          // TODO: else update current positions stoploss and sell more
       }
       //if (m_buySetupOk) m_buySetupOk = false; - safer positioning
-      onSignalTrade(timeframe, TREND_NEGATIVE);
    }
+
+   onTrendValidation(timeframe, rSlow.current);
 }
 
 void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe, int trend) {
@@ -64,66 +66,62 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe, int trend) {
    if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-         orchestraBuy(timeframe, rainbowFast.m_ma3, "rainbow");
+         onBuySignal(timeframe, trend, rainbowFast.m_ma3, "rainbow");
       } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
                  stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-         orchestraBuy(timeframe, rainbowFast.m_ma3, "macd");
+         onBuySignal(timeframe, trend, rainbowFast.m_ma3, "macd");
       } else if (rainbowSlow.m_cross_1_2.current == TREND_POSITIVE_FROM_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma2, "hma12");
+         onBuySignal(timeframe, trend, rainbowSlow.m_ma2, "hma12");
       } else if (rainbowSlow.m_cross_1_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma13");
+         onBuySignal(timeframe, trend, rainbowSlow.m_ma3, "hma13");
       } else if (rainbowSlow.m_cross_2_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
-         orchestraBuy(timeframe, rainbowSlow.m_ma3, "hma23");
+         onBuySignal(timeframe, trend, rainbowSlow.m_ma3, "hma23");
       }
    }
    
    if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) { // SELL SETUP
       if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
           stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-         orchestraSell(timeframe, rainbowFast.m_ma3, "rainbow");
+         onSellSignal(timeframe, trend, rainbowFast.m_ma3, "rainbow");
       } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
                  stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-         orchestraSell(timeframe, rainbowFast.m_ma3, "macd");
+         onSellSignal(timeframe, trend, rainbowFast.m_ma3, "macd");
       } else if (rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE_FROM_POSITIVE) {
-         orchestraSell(timeframe, rainbowSlow.m_ma2, "hma12");
+         onSellSignal(timeframe, trend, rainbowSlow.m_ma2, "hma12");
       } else if (rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
-         orchestraSell(timeframe, rainbowSlow.m_ma3, "hma13");
+         onSellSignal(timeframe, trend, rainbowSlow.m_ma3, "hma13");
       } else if (rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
-         orchestraSell(timeframe, rainbowSlow.m_ma3, "hma23");
+         onSellSignal(timeframe, trend, rainbowSlow.m_ma3, "hma23");
       }
    }
 }
 
-void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice, string signalOrigin="") {
-   if (isBarMarked("long", timeframe)) return;
-   else markBarTraded("long", timeframe);
-
+void AlphaVisionTraderOrchestra::calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
    BBTrend *bb3 = av.m_bb3;
 
-   double marketPrice = Ask;
-   double limitPrice = bb.m_bbBottom;
-   double target = bb.m_bbTop;
-   double stopLoss = bb3.m_bbBottom - m_mkt.vspread * 2;
+   ee.signal = signalPrice;
+   ee.market = Ask;
+   ee.limit = bb.m_bbBottom;
+   ee.target = bb.m_bbTop;
+   ee.stopLoss = bb3.m_bbBottom - m_mkt.vspread * 2;
+   ee.algo = StringFormat("ORCH-%s-lmt", signalOrigin);
    
-   safeGoLong(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
-   safeGoLong(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));
+   safeGoLong(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
 }
 
-void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice, string signalOrigin="") {
-   if (isBarMarked("short", timeframe)) return;
-   else markBarTraded("short", timeframe);
-
+void AlphaVisionTraderOrchestra::calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
    BBTrend *bb3 = av.m_bb3;
 
-   double marketPrice = Bid;
-   double limitPrice = bb.m_bbTop;
-   double target = bb.m_bbBottom;
-   double stopLoss = bb3.m_bbTop + m_mkt.vspread * 2;
+   ee.signal = signalPrice;
+   ee.market = Bid;
+   ee.limit = bb.m_bbTop;
+   ee.target = bb.m_bbBottom;
+   ee.stopLoss = bb3.m_bbTop + m_mkt.vspread * 2;
+   ee.algo = StringFormat("ORCH-%s-lmt", signalOrigin);
    
-   safeGoShort(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
-   safeGoShort(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));
+   safeGoShort(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
 }
