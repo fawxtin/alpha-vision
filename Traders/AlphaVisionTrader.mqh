@@ -41,10 +41,8 @@ class AlphaVisionTrader : public Trader {
       // trader executing signals
       virtual void onTrendSetup(int timeframe);
       virtual void onTrendValidation(int timeframe);
-      virtual void onSignalTrade(int timeframe) {}
-      //virtual void onSignalTradeBull(int timeframe) {}
-      //virtual void onSignalTradeBear(int timeframe) {}
-      virtual void checkVolatility(int timeframe) {}
+      virtual void checkVolatility(int timeframe);
+      virtual void onSignalTrade(int timeframe, int trend) {}
       virtual void onScalpTrade(int timeframe) {}
       virtual void onBreakoutTrade(int timeframe) {}
 };
@@ -70,10 +68,20 @@ void AlphaVisionTrader::onTrendSetup(int timeframe) {
    if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) m_sellSetupOk = false;
    if (stochHi.m_signal <= (STOCH_OVERSOLD_THRESHOLD - STOCH_OVERREGION)) m_buySetupOk = true;
    
+   checkVolatility(timeframe);
    onTrendValidation(timeframe);
 }
 
+void AlphaVisionTrader::checkVolatility(int timeframe) {
+   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
+   ATRdelta *atr = av.m_atr;
+
+   m_volatility = atr.getTrend();
+}
+
+///
 /// Uses Higher Timeframe RainbowFast as MAIN Trend
+///
 void AlphaVisionTrader::onTrendValidation(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
@@ -82,7 +90,7 @@ void AlphaVisionTrader::onTrendValidation(int timeframe) {
 
    TrendChange rHiFast = rainbowHiFast.getTrendHst();
    if (rHiFast.current == TREND_NEUTRAL) { // Neutral trend
-      onSignalTrade(timeframe);
+      onSignalTrade(timeframe, TREND_NEUTRAL);
    } else if (rHiFast.current == TREND_POSITIVE) { // Positive trend
       if (rHiFast.changed) {
          Alert(StringFormat("[Trader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF), 
@@ -90,15 +98,15 @@ void AlphaVisionTrader::onTrendValidation(int timeframe) {
          if (stochHi.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
-      onSignalTrade(timeframe);
-   } else if (rHiFast.current == TREND_POSITIVE) { // Negative trend
+      onSignalTrade(timeframe, TREND_POSITIVE);
+   } else if (rHiFast.current == TREND_NEGATIVE) { // Negative trend
       if (rHiFast.changed) {
          Alert(StringFormat("[Trader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF),
                             EnumToString((TRENDS) rHiFast.current)));
          if (stochHi.m_signal > STOCH_OVERSOLD_THRESHOLD) closeLongs(timeframe, StringFormat("Trend-Negative", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
-      onSignalTrade(timeframe);
+      onSignalTrade(timeframe, TREND_NEGATIVE);
    }
 }
 

@@ -4,7 +4,7 @@
 
 ** Learning Techniques
 *** Ralph Vince - Mathematics for Market
-    DEADLINE: <2016-09-28 qua>
+    DEADLINE: <2016-10-22 sáb>
     Provide a schedule and a resume on the subject.
 
 *** Quantitative Trading and Money Management
@@ -20,7 +20,7 @@
 
 *** TODO flush file handler
 
-*** TODO provide a trend input structure / for each trend type
+*** provide a trend input structure / for each trend type
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.

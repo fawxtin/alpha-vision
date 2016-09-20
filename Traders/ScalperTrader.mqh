@@ -9,55 +9,23 @@
 
 #include <Traders\AlphaVisionTrader.mqh>
 
-#define STOCH_OVERSOLD_THRESHOLD 35
-#define STOCH_OVERBOUGHT_THRESHOLD 65
-#define MIN_RISK_AND_REWARD_RATIO 1.55
 
 class AlphaVisionTraderScalper : public AlphaVisionTrader {      
    public:
-      AlphaVisionTraderScalper(AlphaVisionSignals *signals): AlphaVisionTrader(signals) { }
+      AlphaVisionTraderScalper(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals) {
+         m_riskAndRewardRatio = rr;
+      }
       
-      virtual void onTrendSetup(int timeframe);
-      virtual void onSignalTrade(int timeframe);
-      virtual void onSignalValidation(int timeframe) {}
-      virtual void checkVolatility(int timeframe);
-      virtual void onScalpTrade(int timeframe);
-      virtual void onBreakoutTrade(int timeframe) {}
+      virtual void onSignalTrade(int timeframe, int trend);
       void scalperBuy(int timeframe, double signalPrice, string signalOrigin="");
       void scalperSell(int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
-void AlphaVisionTraderScalper::onTrendSetup(int timeframe) {
-   int higherTF = m_signals.getTimeFrameAbove(timeframe);
-   AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
-   StochasticTrend *stochHi = avHi.m_stoch;
-   BBTrend *bb = avHi.m_bb;
-   RainbowTrend *rainbowSlow = avHi.m_rainbowSlow;
-   double bbPosition = bb.getRelativePosition();
-
-   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
-      m_buySetupOk = false;
-      m_sellSetupOk = true;
-   } else if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
-      m_buySetupOk = true;
-      m_sellSetupOk = false;
-   } else if (m_buySetupOk == false || m_sellSetupOk == false) {
-      m_buySetupOk = true;
-      m_sellSetupOk = true;
-   }
-
-   checkVolatility(timeframe);
-}
-
-void AlphaVisionTraderScalper::checkVolatility(int timeframe) { // not using it
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   ATRdelta *atr = av.m_atr;
-
-   if (atr.getTrend() == TREND_VOLATILITY_LOW) onSignalTrade(timeframe); 
-}
-
-void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
+void AlphaVisionTraderScalper::onSignalTrade(int timeframe, int trend) {
+   // wont trade on high volatility
+   if (m_volatility != TREND_VOLATILITY_LOW) return;
+   
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
@@ -67,18 +35,24 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    StochasticTrend *stoch = av.m_stoch;
    ATRdelta *atr = av.m_atr;
    BBTrend *bb = av.m_bb;
+   MACDTrend *macd = av.m_macd;
 
    TrendChange tc = rainbowFast.getTrendHst();
    // using fast trend signals and current trend BB positioning
-   if (tc.changed == false) return;
-   if (m_buySetupOk == true && tc.current == TREND_POSITIVE &&
-       stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
-      PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperBuy(timeframe, rainbowFast.m_ma3, "rainbow");
-   } else if (m_sellSetupOk == true && tc.current == TREND_NEGATIVE &&
-              stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down on overbought territory
-      PrintFormat("[TraderScalper.debug] stochHi %.2f, stoch %.2f", stochHi.m_signal, stoch.m_signal);
-      scalperSell(timeframe, rainbowFast.m_ma3, "rainbow");
+   if (m_buySetupOk == true && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
+      if (tc.changed == true && tc.current == TREND_POSITIVE && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+         scalperBuy(timeframe, rainbowFast.m_ma3, "rainbow");
+      } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+         scalperBuy(timeframe, rainbowFast.m_ma3, "macd");
+      }   
+   }
+   
+   if (m_sellSetupOk == true && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) { // SELL SETUP
+      if (tc.changed == true && tc.current == TREND_NEGATIVE && stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+         scalperSell(timeframe, rainbowFast.m_ma3, "rainbow");
+      } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE && stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+         scalperSell(timeframe, rainbowFast.m_ma3, "macd");
+      }
    }
 }
 
@@ -88,26 +62,37 @@ void AlphaVisionTraderScalper::scalperBuy(int timeframe, double signalPrice, str
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
-   BBTrend *bb3 = av.m_bb3;
+   BBTrend *bb4 = av.m_bb4;
 
-   double marketPrice = Ask;
+   string bbType;
+   double bbRelativePosition = bb.getRelativePosition();
    double limitPrice;
    double target;
    double stopLoss;
    
-   if (bb.simplify() == "POSITIVE") {
-      limitPrice = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
+   if (bbRelativePosition > 1) { // Higher top
+      bbType = "ht";
+      limitPrice = bb.m_bbMiddle;
       target = bb.m_bbTop;
       stopLoss = bb.m_bbBottom - (m_mkt.vspread * 2);
-   } else { // Negative
+   } else if (bbRelativePosition > 0) { // Higher low
+      bbType = "hl";
+      limitPrice = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
+      target = bb.m_bbTop;
+      stopLoss = bb.m_bbBottom - (m_mkt.vspread * 2);   
+   } else if (bbRelativePosition > -1) { // Lower top
+      bbType = "lt";
       limitPrice = bb.m_bbBottom;
       target = (bb.m_bbMiddle + bb.m_bbTop) / 2;
-      stopLoss = bb3.m_bbBottom - (m_mkt.vspread * 2);      
+      stopLoss = bb4.m_bbBottom - (m_mkt.vspread * 2);      
+   } else { // Lower low
+      bbType = "ll";
+      limitPrice = bb.m_bbBottom;
+      target = bb.m_bbMiddle;
+      stopLoss = bb4.m_bbBottom - (m_mkt.vspread * 2);      
    }
    
-   safeGoLong(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-mkt", signalOrigin));
-   safeGoLong(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-sgn", signalOrigin));
-   safeGoLong(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-lmt", signalOrigin));
+   safeGoLong(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("SCLP-%s-%s", signalOrigin, bbType));
 }
 
 void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, string signalOrigin="") {
@@ -116,25 +101,35 @@ void AlphaVisionTraderScalper::scalperSell(int timeframe, double signalPrice, st
 
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    BBTrend *bb = av.m_bb;
-   BBTrend *bb3 = av.m_bb3;
+   BBTrend *bb4 = av.m_bb4;
 
-   double marketPrice = Bid;
-   double limitPrice = bb.m_bbTop;
-   double target = bb.m_bbBottom;
-   double stopLoss = bb3.m_bbTop + m_mkt.vspread;
+   string bbType;
+   double bbRelativePosition = bb.getRelativePosition();
+   double limitPrice;
+   double target;
+   double stopLoss;
 
-   if (bb.simplify() == "POSITIVE") {
+   if (bbRelativePosition > 1) { // Higher top
+      bbType = "ht";
       limitPrice = bb.m_bbTop;
-      target = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
-      stopLoss = bb3.m_bbTop + (m_mkt.vspread * 2);      
-   } else if (bb.simplify() == "NEGATIVE") {
+      target = bb.m_bbMiddle;
+      stopLoss = bb4.m_bbTop + (m_mkt.vspread * 2);      
+   } else if (bbRelativePosition > 0) { // Higher low
+      bbType = "hl";
       limitPrice = (bb.m_bbMiddle + bb.m_bbTop) / 2;
+      target = bb.m_bbMiddle;
+      stopLoss = bb4.m_bbTop + (m_mkt.vspread * 2);   
+   } else if (bbRelativePosition > -1) { // Lower top
+      bbType = "lt";
+      limitPrice = bb.m_bbMiddle;
       target = bb.m_bbBottom;
-      stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);
+      stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);      
+   } else { // Lower low
+      bbType = "ll";
+      limitPrice = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
+      target = bb.m_bbBottom;
+      stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);      
    }
-
    
-   safeGoShort(timeframe, marketPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-mkt", signalOrigin));
-   safeGoShort(timeframe, signalPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-sgn", signalOrigin));
-   safeGoShort(timeframe, limitPrice, target, stopLoss, MIN_RISK_AND_REWARD_RATIO, StringFormat("SCLP-%s-lmt", signalOrigin));
+   safeGoShort(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("SCLP-%s-%s", signalOrigin, bbType));
 }

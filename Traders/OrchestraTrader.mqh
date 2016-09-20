@@ -15,7 +15,7 @@ class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
       AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) { }
       
       virtual void onTrendValidation(int timeframe);
-      virtual void onSignalTrade(int timeframe);
+      virtual void onSignalTrade(int timeframe, int trend);
       void orchestraBuy(int timeframe, double signalPrice, string signalOrigin="");
       void orchestraSell(int timeframe, double signalPrice, string signalOrigin="");
 
@@ -29,7 +29,7 @@ void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
 
    TrendChange rSlow = rainbowSlow.getTrendHst();
    if (rSlow.current == TREND_NEUTRAL) { // Neutral trend
-      onSignalTrade(timeframe);
+      onSignalTrade(timeframe, TREND_NEUTRAL);
    } else if (rSlow.current == TREND_POSITIVE) { // Positive trend
       if (rSlow.changed) {
          Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe), 
@@ -38,7 +38,7 @@ void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
          // TODO: else update current positions stoploss and sell more
       }
       //if (m_sellSetupOk) m_sellSetupOk = false; - safer positioning
-      onSignalTrade(timeframe);
+      onSignalTrade(timeframe, TREND_POSITIVE);
    } else if (rSlow.current == TREND_NEGATIVE) { // Negative trend
       if (rSlow.changed) {
          Alert(StringFormat("[Trader/%s] %s trend changed to: %s", Symbol(), m_signals.getTimeframeStr(timeframe),
@@ -47,11 +47,11 @@ void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
          // TODO: else update current positions stoploss and sell more
       }
       //if (m_buySetupOk) m_buySetupOk = false; - safer positioning
-      onSignalTrade(timeframe);
+      onSignalTrade(timeframe, TREND_NEGATIVE);
    }
 }
 
-void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
+void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe, int trend) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowFast = av.m_rainbowFast;
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;

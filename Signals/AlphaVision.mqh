@@ -31,17 +31,19 @@ class AlphaVision : public HashValue {
       RainbowTrend *m_rainbowSlow;
       BBTrend *m_bb;
       BBTrend *m_bb3;
+      BBTrend *m_bb4;
       StochasticTrend *m_stoch;
       MACDTrend *m_macd;
       ATRdelta *m_atr;
           
    
-      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow, BBTrend *bb, BBTrend *bb3,
+      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow, BBTrend *bb, BBTrend *bb3, BBTrend *bb4,
                   StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
          m_rainbowFast = rainbowFast;
          m_rainbowSlow = rainbowSlow;
          m_bb = bb;
          m_bb3 = bb3;
+         m_bb4 = bb4;
          m_stoch = stoch;
          m_macd = macd;
          m_atr = atr;
@@ -52,6 +54,7 @@ class AlphaVision : public HashValue {
          delete m_rainbowSlow;
          delete m_bb;
          delete m_bb3;
+         delete m_bb4;
          delete m_stoch;
          delete m_macd;
          delete m_atr;
@@ -62,6 +65,7 @@ class AlphaVision : public HashValue {
          m_rainbowSlow.calculate();
          m_bb.calculate();
          m_bb3.calculate();
+         m_bb4.calculate();
          m_stoch.calculate();
          m_macd.calculate();
          m_atr.calculate();
@@ -85,6 +89,7 @@ class AlphaVisionSignals : public Signals {
                                                new RainbowTrend(timeframe, 20, 50, 200),
                                                new BBTrend(timeframe),
                                                new BBTrend(timeframe, 3.0),
+                                               new BBTrend(timeframe, 4.0),
                                                new StochasticTrend(timeframe),
                                                new MACDTrend(timeframe),
                                                new ATRdelta(timeframe, 14, 80)));
