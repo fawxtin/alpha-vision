@@ -9,48 +9,20 @@
 
 #include <Traders\AlphaVisionTrader.mqh>
 
-#define STOCH_OVERSOLD_THRESHOLD 35
-#define STOCH_OVERBOUGHT_THRESHOLD 65
-#define STOCH_OVERREGION 10
-
 
 class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
    public:
       AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) { }
       
-      virtual void onTrendSetup(int timeframe);
-      virtual void onSignalValidation(int timeframe);
+      virtual void onTrendValidation(int timeframe);
       virtual void onSignalTrade(int timeframe);
       void orchestraBuy(int timeframe, double signalPrice, string signalOrigin="");
       void orchestraSell(int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
-void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
-   int higherTF = m_signals.getTimeFrameAbove(timeframe);
-   AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
-   StochasticTrend *stochHi = avHi.m_stoch;
-   RainbowTrend *rainbowHiSlow = avHi.m_rainbowSlow;
-
-   m_buySetupOk = true;
-   m_sellSetupOk = true;
-   
-   // RainbowSlow trending
-   if (rainbowHiSlow.getTrend() == TREND_NEGATIVE) m_buySetupOk = false;
-   if (rainbowHiSlow.getTrend() == TREND_POSITIVE) m_sellSetupOk = false;
-   
-   /// Strength
-   // Overbought regions
-   if (stochHi.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) m_buySetupOk = false;
-   if (stochHi.m_signal >= (STOCH_OVERBOUGHT_THRESHOLD + STOCH_OVERREGION)) m_sellSetupOk = true;
-   // Oversold regions
-   if (stochHi.m_signal <= STOCH_OVERSOLD_THRESHOLD) m_sellSetupOk = false;
-   if (stochHi.m_signal <= (STOCH_OVERSOLD_THRESHOLD - STOCH_OVERREGION)) m_buySetupOk = true;
-   
-   onSignalValidation(timeframe);
-}
-
-void AlphaVisionTraderOrchestra::onSignalValidation(int timeframe) {
+/// Using RainbowSlow as MAIN Trend
+void AlphaVisionTraderOrchestra::onTrendValidation(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
@@ -133,7 +105,7 @@ void AlphaVisionTraderOrchestra::orchestraBuy(int timeframe, double signalPrice,
    double marketPrice = Ask;
    double limitPrice = bb.m_bbBottom;
    double target = bb.m_bbTop;
-   double stopLoss = bb3.m_bbBottom - m_mkt.vspread;
+   double stopLoss = bb3.m_bbBottom - m_mkt.vspread * 2;
    
    safeGoLong(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
    safeGoLong(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));
@@ -150,7 +122,7 @@ void AlphaVisionTraderOrchestra::orchestraSell(int timeframe, double signalPrice
    double marketPrice = Bid;
    double limitPrice = bb.m_bbTop;
    double target = bb.m_bbBottom;
-   double stopLoss = bb3.m_bbTop + m_mkt.vspread;
+   double stopLoss = bb3.m_bbTop + m_mkt.vspread * 2;
    
    safeGoShort(timeframe, marketPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
    safeGoShort(timeframe, limitPrice, target, stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-lmt", signalOrigin));

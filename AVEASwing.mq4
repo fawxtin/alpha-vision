@@ -22,28 +22,13 @@ input int iFastTimeFrame = PERIOD_M5;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 
-/*
- * Create an AlphaVision class that handles with:
- *    - HMA minor/major trend (current time interval)
- *    - HMA minor/major trend (higher time interval / given by input)
- *    - BB std2/std3 trends (current time interval)
- *    - BB std2/std3 trends (higher time interval)
- *    - ATR (current time interval)
- *    - ATR (higher time interval)
- *    - calculate support / resistence ? use BB?
- *
- * Calculate possible entry points, given mixed data:
- *    - HMA cross
- *    - BB bottom/top
- *    - BB crossing MA (changing tunnels)
- *    - BB overtops/overbottoms (reverses) 
- * 
- * Calculate Risk & Reward ratio (check if entry point is good/valid):
- *    - Volatility
- *    - ATR
- *    - Stochastic?
- *
- */
+input double iLotSize = 0.01;
+input double iRiskAndRewardRatio = 2.0;
+
+input bool iTradeFastP = true;
+input bool iTradeCurrentP = true;
+input bool iTradeMajorP = true;
+input bool iTradeSuperP = true;
 
 ////
 //// GLOBALS
@@ -56,8 +41,8 @@ int gCountTicks;
 
 
 int OnInit() {
-   gSignalTF.current = Period();
    gSignalTF.fast = iFastTimeFrame;
+   gSignalTF.current = Period();
    gSignalTF.major = iMajorTimeFrame;
    gSignalTF.super = iSuperTimeFrame;
    
@@ -71,22 +56,25 @@ int OnInit() {
 
    // loading signals
    AlphaVisionSignals *avSignals = new AlphaVisionSignals(gSignalTF);
-   //avSignals.initOn(gSignalTF.fast, iPeriod1, iPeriod2, iPeriod3);
-   //avSignals.calculateOn(gSignalTF.fast);
+   avSignals.initOn(gSignalTF.fast);
+   avSignals.calculateOn(gSignalTF.fast);
    avSignals.initOn(gSignalTF.current);
    avSignals.calculateOn(gSignalTF.current);
    avSignals.initOn(gSignalTF.major);
    avSignals.calculateOn(gSignalTF.major);
    avSignals.initOn(gSignalTF.super);
    avSignals.calculateOn(gSignalTF.super);
+   avSignals.initOn(PERIOD_MN1);
+   avSignals.calculateOn(PERIOD_MN1);
 
 
    // loading current positions
-   gTrader = new AlphaVisionTraderSwing(avSignals);
-   //gTrader.loadCurrentOrders(gSignalTF.fast);
-   gTrader.loadCurrentOrders(gSignalTF.current);
-   gTrader.loadCurrentOrders(gSignalTF.major);
-   gTrader.loadCurrentOrders(gSignalTF.super);
+   gTrader = new AlphaVisionTraderSwing(avSignals, iRiskAndRewardRatio);
+   gTrader.setLotSize(iLotSize);
+   if (iTradeFastP) gTrader.loadCurrentOrders(gSignalTF.fast);
+   if (iTradeCurrentP) gTrader.loadCurrentOrders(gSignalTF.current);
+   if (iTradeMajorP) gTrader.loadCurrentOrders(gSignalTF.major);
+   if (iTradeSuperP) gTrader.loadCurrentOrders(gSignalTF.super);
    
    gCountMinutes = 0;
    gCountTicks = 0;
@@ -97,12 +85,12 @@ int OnInit() {
 
 // OnTester - close positions
 double OnTester() {
-   //gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
+   gTrader.closeLongs(gSignalTF.fast, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.current, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.major, "End-Of-Test");
    gTrader.closeLongs(gSignalTF.super, "End-Of-Test");
 
-   //gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
+   gTrader.closeShorts(gSignalTF.fast, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.current, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.major, "End-Of-Test");
    gTrader.closeShorts(gSignalTF.super, "End-Of-Test");
@@ -129,13 +117,13 @@ void OnTimer() {
 
    if (gCountMinutes % 3 == 0) { // every 3 minutes
       signals.calculateOn(gSignalTF.current);
-      gTrader.onTrendSetup(gSignalTF.current);
+      if (iTradeCurrentP) gTrader.onTrendSetup(gSignalTF.current);
    } else if (gCountMinutes % 15 == 0) { // every 15 minutes
       signals.calculateOn(gSignalTF.major);
-      gTrader.onTrendSetup(gSignalTF.major);
+      if (iTradeMajorP) gTrader.onTrendSetup(gSignalTF.major);
    } else if (gCountMinutes % 55 == 0) {
       signals.calculateOn(gSignalTF.super);
-      gTrader.onTrendSetup(gSignalTF.super);
+      if (iTradeSuperP) gTrader.onTrendSetup(gSignalTF.super);
    }
 }
 
@@ -149,14 +137,16 @@ void OnTick() {
       return;
    }
    // remove already closed orders
-   //gTrader.cleanOrders(gSignalTF.fast);
-   gTrader.cleanOrders(gSignalTF.current);
-   gTrader.cleanOrders(gSignalTF.major);
-   gTrader.cleanOrders(gSignalTF.super);
+   if (iTradeFastP) gTrader.cleanOrders(gSignalTF.fast);
+   if (iTradeCurrentP) gTrader.cleanOrders(gSignalTF.current);
+   if (iTradeMajorP) gTrader.cleanOrders(gSignalTF.major);
+   if (iTradeSuperP) gTrader.cleanOrders(gSignalTF.super);
    
    AlphaVisionSignals *signals = gTrader.getSignals();
-   //signals.calculateOn(gSignalTF.fast);
-   //gTrader.onTrendSetup(gSignalTF.fast); - disabled trading fast track
+   if (iTradeFastP) {
+      signals.calculateOn(gSignalTF.fast);
+      gTrader.onTrendSetup(gSignalTF.fast);
+   }
    
    if (iIsTest) {
       //signals.calculateOn(gSignalTF.current);
@@ -164,14 +154,14 @@ void OnTick() {
       gCountTicks++;
       if (gCountTicks % 35 == 0) {
          signals.calculateOn(gSignalTF.current);
-         gTrader.onTrendSetup(gSignalTF.current);
+         if (iTradeCurrentP) gTrader.onTrendSetup(gSignalTF.current);
       } else if (gCountTicks >= 300) {
          signals.calculateOn(gSignalTF.major);
-         gTrader.onTrendSetup(gSignalTF.major);
+         if (iTradeMajorP) gTrader.onTrendSetup(gSignalTF.major);
       } else if (gCountTicks >= 900) {
          gCountTicks = 0;
          signals.calculateOn(gSignalTF.super);
-         gTrader.onTrendSetup(gSignalTF.super);
+         if (iTradeSuperP) gTrader.onTrendSetup(gSignalTF.super);
       }
    }
 }
