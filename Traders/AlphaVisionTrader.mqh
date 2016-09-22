@@ -32,7 +32,7 @@ class AlphaVisionTrader : public Trader {
    protected:
       AlphaVisionSignals *m_signals;
       int m_volatility;
-      //int m_trend; -- trading trend?
+      int m_cTrend;
       bool m_buySetupOk;
       bool m_sellSetupOk;
       double m_riskAndRewardRatio;
@@ -51,14 +51,14 @@ class AlphaVisionTrader : public Trader {
 
       // trader executing signals
       virtual void onTrendSetup(int timeframe);
-      virtual void onTrendValidation(int timeframe, int trend);
+      virtual void onTrendValidation(int timeframe);
       virtual void checkVolatility(int timeframe);
-      virtual void onSignalTrade(int timeframe, int trend) {}
-      virtual void onBuySignal(int timeframe, int trend, double signalPrice, string signalStr="");
-      virtual void onSellSignal(int timeframe, int trend, double signalPrice, string signalStr="");
+      virtual void onSignalTrade(int timeframe) {}
+      virtual void onBuySignal(int timeframe, double signalPrice, string signalStr="");
+      virtual void onSellSignal(int timeframe, double signalPrice, string signalStr="");
 
-      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, int trend, double signalPrice, string signalOrigin) {}
-      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, int trend, double signalPrice, string signalOrigin) {}
+      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin) {}
+      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin) {}
       
       virtual void onScalpTrade(int timeframe) {}
       virtual void onBreakoutTrade(int timeframe) {}
@@ -74,16 +74,17 @@ void AlphaVisionTrader::onTrendSetup(int timeframe) {
    StochasticTrend *stochHi = avHi.m_stoch;
 
    TrendChange rHiFast = rainbowHiFast.getTrendHst();
-   if (rHiFast.current == TREND_NEUTRAL) { // Neutral trend
+   m_cTrend = rHiFast.current; 
+   if (m_cTrend == TREND_NEUTRAL) { // Neutral trend
       ;   
-   } else if (rHiFast.current == TREND_POSITIVE) { // Positive trend
+   } else if (m_cTrend == TREND_POSITIVE) { // Positive trend
       if (rHiFast.changed) {
          Alert(StringFormat("[Trader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF), 
                             EnumToString((TRENDS) rHiFast.current)));
          if (stochHi.m_signal < STOCH_OVERBOUGHT_THRESHOLD) closeShorts(timeframe, StringFormat("Trend-Positive", timeframe));
          // TODO: else update current positions stoploss and sell more
       }
-   } else if (rHiFast.current == TREND_NEGATIVE) { // Negative trend
+   } else if (m_cTrend == TREND_NEGATIVE) { // Negative trend
       if (rHiFast.changed) {
          Alert(StringFormat("[Trader/%s] %s RainbowFast changed to: %s", Symbol(), m_signals.getTimeframeStr(higherTF),
                             EnumToString((TRENDS) rHiFast.current)));
@@ -92,10 +93,10 @@ void AlphaVisionTrader::onTrendSetup(int timeframe) {
       }
    }
    
-   onTrendValidation(timeframe, rHiFast.current);
+   onTrendValidation(timeframe);
 }
 
-void AlphaVisionTrader::onTrendValidation(int timeframe, int trend) {
+void AlphaVisionTrader::onTrendValidation(int timeframe) {
    int higherTF = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
    StochasticTrend *stochHi = avHi.m_stoch;
@@ -118,7 +119,7 @@ void AlphaVisionTrader::onTrendValidation(int timeframe, int trend) {
    
    checkVolatility(timeframe);
 
-   onSignalTrade(timeframe, trend);
+   onSignalTrade(timeframe);
 }
 
 void AlphaVisionTrader::checkVolatility(int timeframe) {
@@ -128,21 +129,25 @@ void AlphaVisionTrader::checkVolatility(int timeframe) {
    m_volatility = atr.getTrend();
 }
 
-void AlphaVisionTrader::onBuySignal(int timeframe, int trend, double signalPrice, string signalOrig="") {
+void AlphaVisionTrader::onBuySignal(int timeframe, double signalPrice, string signalOrig="") {
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
    EntryExitSpot ee;
-   calculateBuyEntry(ee, timeframe, trend, signalPrice, signalOrig);
+   ee.market = Ask;
+   ee.signal = signalPrice;
+   calculateBuyEntry(ee, timeframe, signalPrice, signalOrig);
    safeGoLong(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
 }
 
-void AlphaVisionTrader::onSellSignal(int timeframe, int trend, double signalPrice, string signalOrig="") {
+void AlphaVisionTrader::onSellSignal(int timeframe, double signalPrice, string signalOrig="") {
    if (isBarMarked("short", timeframe)) return;
    else markBarTraded("short", timeframe);
 
    EntryExitSpot ee;
-   calculateSellEntry(ee, timeframe, trend, signalPrice, signalOrig);
+   ee.market = Bid;
+   ee.signal = signalPrice;
+   calculateSellEntry(ee, timeframe, signalPrice, signalOrig);
    safeGoShort(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
 }
 
