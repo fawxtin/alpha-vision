@@ -35,9 +35,11 @@ void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    ATRdelta *atr = av.m_atr;
    BBTrend *bb = av.m_bb;
    MACDTrend *macd = av.m_macd;
+   
+   if (m_volatility == TREND_VOLATILITY_LOW) setTradeMarket(false);
+   else setTradeMarket(true);
 
    TrendChange tc = rainbowFast.getTrendHst();
-   
    if (m_buySetupOk == true && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (tc.changed == true && tc.current == TREND_POSITIVE && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up on oversold territory
          onBuySignal(timeframe, rainbowFast.m_ma3, "rainbow");

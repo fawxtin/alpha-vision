@@ -24,10 +24,6 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    // wont trade on high volatility
    if (m_volatility != TREND_VOLATILITY_LOW) return;
    
-   int higherTF = m_signals.getTimeFrameAbove(timeframe);
-   AlphaVision *avHi = m_signals.getAlphaVisionOn(higherTF);
-   StochasticTrend *stochHi = avHi.m_stoch;
-
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowFast = av.m_rainbowFast;
    StochasticTrend *stoch = av.m_stoch;
