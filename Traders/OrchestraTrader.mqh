@@ -12,12 +12,13 @@
 
 class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) { }
+      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
+         setTradeMarket(true);
+         m_entries.hPut("BB", new EntryPointsBB(m_signals));
+      }
       
       virtual void onTrendSetup(int timeframe);
       virtual void onSignalTrade(int timeframe);
-      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="");
-      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="");
 
 };
 
@@ -97,28 +98,3 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    }
 }
 
-void AlphaVisionTraderOrchestra::calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   BBTrend *bb = av.m_bb;
-   BBTrend *bb3 = av.m_bb3;
-
-   ee.limit = bb.m_bbBottom;
-   ee.target = bb.m_bbTop;
-   ee.stopLoss = bb3.m_bbBottom - m_mkt.vspread * 2;
-   ee.algo = StringFormat("ORCH-%s-lmt", signalOrigin);
-   
-   safeGoLong(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
-}
-
-void AlphaVisionTraderOrchestra::calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   BBTrend *bb = av.m_bb;
-   BBTrend *bb3 = av.m_bb3;
-
-   ee.limit = bb.m_bbTop;
-   ee.target = bb.m_bbBottom;
-   ee.stopLoss = bb3.m_bbTop + m_mkt.vspread * 2;
-   ee.algo = StringFormat("ORCH-%s-lmt", signalOrigin);
-   
-   safeGoShort(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("ORCH-%s-mkt", signalOrigin));
-}

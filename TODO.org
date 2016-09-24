@@ -40,7 +40,10 @@
        |
      calculates entry/exit points
    
-
+*** Multiple EntryPoints schema, through list/hash
+    Create entry points schemas to be attached to AlphaVisionTrader.
+    The entry points can be disabled or deattached, on some trending/volatility rule.
+    -> EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin
 
 *** TODO do *not* open new position near current placed position
     sometimes multiple signals are sent on same bet, creating

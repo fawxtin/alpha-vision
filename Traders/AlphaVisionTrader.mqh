@@ -7,8 +7,10 @@
 #property link      "https://www.mql5.com"
 #property strict
 
+#include <Arrays\Hash.mqh>
 #include <Traders\Trader.mqh>
 #include <Signals\AlphaVision.mqh>
+#include <Signals\EntryPoints.mqh>
 
 #ifndef __TRADER_ALPHAVISION__
 #define __TRADER_ALPHAVISION__ 1
@@ -18,36 +20,31 @@
 #define STOCH_OVERREGION 10
 
 
-struct EntryExitSpot {
-   double target;
-   double limit;
-   double market;
-   double stopLoss;
-   double signal;
-   string algo;
-};
-
-
 class AlphaVisionTrader : public Trader {
    protected:
       AlphaVisionSignals *m_signals;
+      Hash *m_entries;
       int m_volatility;
       int m_cTrend;
       bool m_buySetupOk;
       bool m_sellSetupOk;
       double m_riskAndRewardRatio;
+      bool m_tradeMarket;
 
    public:
       AlphaVisionTrader(AlphaVisionSignals *signals, double riskAndRewardRatio=2.0) {
          m_signals = signals;
+         m_entries = new Hash(193, true);
          m_riskAndRewardRatio = riskAndRewardRatio;
          m_buySetupOk = false;
          m_sellSetupOk = false;
+         m_tradeMarket = false;
       }
       
-      void ~AlphaVisionTrader() { delete m_signals; }
+      void ~AlphaVisionTrader() { delete m_signals; delete m_entries; }
       
       AlphaVisionSignals *getSignals() { return m_signals; }
+      void setTradeMarket(bool val) { m_tradeMarket = val; }
 
       // trader executing signals
       virtual void onTrendSetup(int timeframe);
@@ -57,9 +54,6 @@ class AlphaVisionTrader : public Trader {
       virtual void onBuySignal(int timeframe, double signalPrice, string signalStr="");
       virtual void onSellSignal(int timeframe, double signalPrice, string signalStr="");
 
-      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin) {}
-      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin) {}
-      
       virtual void onScalpTrade(int timeframe) {}
       virtual void onBreakoutTrade(int timeframe) {}
 };
@@ -133,11 +127,22 @@ void AlphaVisionTrader::onBuySignal(int timeframe, double signalPrice, string si
    if (isBarMarked("long", timeframe)) return;
    else markBarTraded("long", timeframe);
 
+   // TODO: execute multiple entry points
    EntryExitSpot ee;
+   ee.spread = m_mkt.vspread * 2;
    ee.market = Ask;
    ee.signal = signalPrice;
-   calculateBuyEntry(ee, timeframe, signalPrice, signalOrig);
-   safeGoLong(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+
+   HashLoop *loop;
+   for (loop = new HashLoop(m_entries); loop.hasNext(); loop.next()) {
+      EntryPoints *entry = loop.val();
+      entry.calculateBuyEntry(ee, timeframe, signalOrig);
+      safeGoLong(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+   }
+   delete loop;
+
+   if (m_tradeMarket)
+      safeGoLong(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("%s-mkt", ee.algo));
 }
 
 void AlphaVisionTrader::onSellSignal(int timeframe, double signalPrice, string signalOrig="") {
@@ -145,10 +150,20 @@ void AlphaVisionTrader::onSellSignal(int timeframe, double signalPrice, string s
    else markBarTraded("short", timeframe);
 
    EntryExitSpot ee;
+   ee.spread = m_mkt.vspread * 2;
    ee.market = Bid;
    ee.signal = signalPrice;
-   calculateSellEntry(ee, timeframe, signalPrice, signalOrig);
-   safeGoShort(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+   
+   HashLoop *loop;
+   for (loop = new HashLoop(m_entries); loop.hasNext(); loop.next()) {
+      EntryPoints *entry = loop.val();
+      entry.calculateSellEntry(ee, timeframe, signalOrig);
+      safeGoShort(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+   }
+   delete loop;
+
+   if (m_tradeMarket)
+      safeGoShort(timeframe, ee.market, ee.target, ee.stopLoss, m_riskAndRewardRatio, StringFormat("%s-mkt", ee.algo));
 }
 
 #endif

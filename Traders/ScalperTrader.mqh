@@ -14,12 +14,10 @@ class AlphaVisionTraderScalper : public AlphaVisionTrader {
    public:
       AlphaVisionTraderScalper(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals) {
          m_riskAndRewardRatio = rr;
+         m_entries.hPut("BBSmart", new EntryPointsBBSmart(m_signals));
       }
       
       virtual void onSignalTrade(int timeframe);
-      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin);
-      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin);
-
 };
 
 void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
@@ -56,66 +54,3 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    }
 }
 
-void AlphaVisionTraderScalper::calculateBuyEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   BBTrend *bb = av.m_bb;
-   BBTrend *bb4 = av.m_bb4;
-
-   string bbType;
-   double bbRelativePosition = bb.getRelativePosition();
-   
-   if (bbRelativePosition > 1) { // Higher top
-      bbType = "ht";
-      ee.limit = bb.m_bbMiddle;
-      ee.target = bb.m_bbTop;
-      ee.stopLoss = bb.m_bbBottom - (m_mkt.vspread * 2);
-   } else if (bbRelativePosition > 0) { // Higher low
-      bbType = "hl";
-      ee.limit = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
-      ee.target = bb.m_bbTop;
-      ee.stopLoss = bb.m_bbBottom - (m_mkt.vspread * 2);   
-   } else if (bbRelativePosition > -1) { // Lower top
-      bbType = "lt";
-      ee.limit = bb.m_bbBottom;
-      ee.target = (bb.m_bbMiddle + bb.m_bbTop) / 2;
-      ee.stopLoss = bb4.m_bbBottom - (m_mkt.vspread * 2);      
-   } else { // Lower low
-      bbType = "ll";
-      ee.limit = bb.m_bbBottom;
-      ee.target = bb.m_bbMiddle;
-      ee.stopLoss = bb4.m_bbBottom - (m_mkt.vspread * 2);      
-   }
-   ee.algo = StringFormat("SCLP-%s-%s", signalOrigin, bbType);
-}
-
-void AlphaVisionTraderScalper::calculateSellEntry(EntryExitSpot &ee, int timeframe, double signalPrice, string signalOrigin="") {
-   AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
-   BBTrend *bb = av.m_bb;
-   BBTrend *bb4 = av.m_bb4;
-
-   string bbType;
-   double bbRelativePosition = bb.getRelativePosition();
-
-   if (bbRelativePosition > 1) { // Higher top
-      bbType = "ht";
-      ee.limit = bb.m_bbTop;
-      ee.target = bb.m_bbMiddle;
-      ee.stopLoss = bb4.m_bbTop + (m_mkt.vspread * 2);      
-   } else if (bbRelativePosition > 0) { // Higher low
-      bbType = "hl";
-      ee.limit = (bb.m_bbMiddle + bb.m_bbTop) / 2;
-      ee.target = bb.m_bbMiddle;
-      ee.stopLoss = bb4.m_bbTop + (m_mkt.vspread * 2);   
-   } else if (bbRelativePosition > -1) { // Lower top
-      bbType = "lt";
-      ee.limit = bb.m_bbMiddle;
-      ee.target = bb.m_bbBottom;
-      ee.stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);      
-   } else { // Lower low
-      bbType = "ll";
-      ee.limit = (bb.m_bbMiddle + bb.m_bbBottom) / 2;
-      ee.target = bb.m_bbBottom;
-      ee.stopLoss = bb.m_bbTop + (m_mkt.vspread * 2);      
-   }
-   ee.algo = StringFormat("SCLP-%s-%s", signalOrigin, bbType);
-}
