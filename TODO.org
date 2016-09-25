@@ -41,32 +41,35 @@
      calculates entry/exit points
 
 *** Testing results
+    from 01/July to 24/September
+    Gold using BBSmart on swing schema (the number of entries is much lower)
 
 |----------+---------------+-------------------------+--------------------------|
 | Currency | market always | market on high volality | market on low volatility |
 |----------+---------------+-------------------------+--------------------------|
-| EUR/USD  |          1.29 |                    0.81 | 1.30                     |
-| GBP/USD  |               |                         |                          |
-| USD/JPY  |               |                         |                          |
-| GOLD     |               |                         |                          |
+| EUR/USD  |          1.29 |                    0.81 |                     1.30 |
+| GBP/USD  |               |                         |                     1.26 |
+| USD/JPY  |               |                         |                     0.75 |
+| EUR/GBP  |               |                         |                     0.80 |
+| GOLD     |          2.04 |                         |                     2.03 |
 |----------+---------------+-------------------------+--------------------------|
 
 |----------+----------+---------------|
 | Currency | entry BB | entry BBSmart |
 |----------+----------+---------------|
-| EUR/USD  |     1.29 | 0.97          |
-| GBP/USD  |          |               |
+| EUR/USD  |     1.29 |          0.97 |
+| GBP/USD  |     1.26 |               |
 | USD/JPY  |          |               |
-| GOLD     |          |               |
+| GOLD     |          |          2.04 |
 |----------+----------+---------------|
 
 |----------+-----------+------------|
 | Currency | fast 5min | fast 15min |
 |----------+-----------+------------|
-| EUR/USD  | 1.08      | 1.29       |
-| GBP/USD  |           |            |
+| EUR/USD  |      1.08 |       1.29 |
+| GBP/USD  |           |       1.26 |
 | USD/JPY  |           |            |
-| GOLD     |           |            |
+| GOLD     |           |       2.03 |
 |----------+-----------+------------|
 
 

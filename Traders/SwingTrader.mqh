@@ -36,8 +36,8 @@ void AlphaVisionTraderSwing::onSignalTrade(int timeframe) {
    BBTrend *bb = av.m_bb;
    MACDTrend *macd = av.m_macd;
    
-   if (m_volatility == TREND_VOLATILITY_LOW) setTradeMarket(false);
-   else setTradeMarket(true);
+   if (m_volatility == TREND_VOLATILITY_LOW) setTradeMarket(true);
+   else setTradeMarket(false);
 
    TrendChange tc = rainbowFast.getTrendHst();
    if (m_buySetupOk == true && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
