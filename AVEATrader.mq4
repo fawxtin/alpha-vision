@@ -33,7 +33,7 @@ input TRADER_TYPES iTrader = TRADER_ORCHESTRA;
 input double iLotSize = 0.01;
 input double iRiskAndRewardRatio = 2.0;
 
-input int iFastTimeFrame = PERIOD_M5;
+input int iFastTimeFrame = PERIOD_M15;
 input int iMajorTimeFrame = PERIOD_H4;
 input int iSuperTimeFrame = PERIOD_W1;
 

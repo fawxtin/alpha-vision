@@ -62,9 +62,11 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
    StochasticTrend *stoch = av.m_stoch;
    MACDTrend *macd = av.m_macd;
 
+   if (m_volatility == TREND_VOLATILITY_LOW) setTradeMarket(true);
+   else setTradeMarket(false);
+
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
-   
    if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
