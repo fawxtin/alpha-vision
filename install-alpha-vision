@@ -9,7 +9,7 @@ cp Arrays/*.mqh "${MT4_DIR}/Include/Arrays/"
 
 ## EA and Scripts
 cp AVEA*.mq4 "${MT4_DIR}/Experts/"
-cp Scripts/*.mq4 "${MT4_DIR}/Scripts/"
+#cp Scripts/*.mq4 "${MT4_DIR}/Scripts/"
 
 ## AV libraries
 [ ! -e "${MT4_DIR}/Include/Logging/" ] && mkdir "${MT4_DIR}/Include/Logging/"

@@ -39,7 +39,7 @@ void OnStart() {
 }
 
 void parsePositions(Positions *positions, string objName, color objColor) {
-   int count = positions.loadCurrentOrders(-1);
+   int count = positions.loadCurrentOrders(-1, false);
    PrintFormat("--- loading %d %s positions", count, positions.positionType());
    if (positions.count() > 0) {
       PositionValue pv = positions.meanPositionValue(true);

@@ -8,7 +8,7 @@ cp "${MT4_DIR}/Include/Arrays/LList.mqh" Arrays/
 
 ## EA and Scripts
 cp "${MT4_DIR}/Experts/"AVEA*.mq4 ./
-#cp "${MT4_DIR}/Scripts/*.mq4" Scripts/
+cp "${MT4_DIR}/Scripts/"*.mq4 Scripts/
 
 ## AV libraries
 cp "${MT4_DIR}/Include/Logging/"* Logging/ 
