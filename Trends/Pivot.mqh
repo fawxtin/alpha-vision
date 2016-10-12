@@ -56,6 +56,7 @@ class PivotTrend : public Trend {
       void calculate();
       void methodFivePoint();
       void methodFivePointSmooth();
+      void calcTrend();
       
       double getRelativePosition();
 };
@@ -68,6 +69,23 @@ void PivotTrend::calculate(void) {
       case PIVOT_5POINT_SMOOTH:
          this.methodFivePointSmooth();
          break;
+   }
+   calcTrend();
+}
+
+void PivotTrend::calcTrend(void) {
+   double relativePosition = getRelativePosition();
+
+   if (relativePosition > 2) {
+      setTrendHst(TREND_POSITIVE_BREAKOUT);
+   } else if (relativePosition > 1) {
+      setTrendHst(TREND_POSITIVE);
+   } else if (relativePosition > -1) {
+      setTrendHst(TREND_NEUTRAL);
+   } else if (relativePosition > -2) {
+      setTrendHst(TREND_NEGATIVE);
+   } else {
+      setTrendHst(TREND_NEGATIVE_BREAKOUT);
    }
 }
 
@@ -88,19 +106,28 @@ void PivotTrend::methodFivePoint(void) {
 }
 
 void PivotTrend::methodFivePointSmooth(void) {
-   calcFivePoint(iHighest(Symbol(), m_timeframe, MODE_HIGH, m_smoothness, 1),
-                 iLowest(Symbol(), m_timeframe, MODE_LOW, m_smoothness, 1),
-                 iClose(Symbol(), m_timeframe, 1));
+   int barHigh = iHighest(Symbol(), m_timeframe, MODE_HIGH, m_smoothness, 1);
+   int barLow = iLowest(Symbol(), m_timeframe, MODE_LOW, m_smoothness, 1);
+
+   if ((barHigh >= 0) && (barLow >= 0))
+      calcFivePoint(High[barHigh], Low[barLow], iClose(Symbol(), m_timeframe, 1));
 }
 
-double PivotTrend::getRelativePosition(void) {
-   double price = (Ask - Bid) / 2;
+double PivotTrend::getRelativePosition() {
+   double price = (Ask + Bid) / 2;
    double range1 = m_R1 - m_S1;
    double range2 = m_R2 - m_S2;
    m_ppDiff = MathAbs(price - m_typical);
+   double relative = 0;
    
-   PrintFormat("[PivotTrend] Typical %.4f, Range1 %.2f, Range2 %.2f", m_typical, range1, range2);
-   return (price - m_typical) / range1;
+   if (range1 > 0) relative = (price - m_typical) / range1;
+
+   string algoType = EnumToString((PivotSystem) m_pivotType);
+   string tfStr = EnumToString((ENUM_TIMEFRAMES) m_timeframe);
+   //PrintFormat("[PivotTrend/%s/%s] %.4f - %.4f * %.4f * %.4f - %.4f / %.4f (%.2f)", algoType, tfStr,
+   //            m_S2, m_S1, m_typical, m_R1, m_R2, price, relative);
+
+   return relative;
 }
 
 #endif

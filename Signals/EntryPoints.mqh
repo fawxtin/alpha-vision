@@ -155,28 +155,29 @@ class EntryPointsPivot : public EntryPoints {
          if (pivotRelativePosition > 2) { // Broke R2
             pivotPosition = "r2-bk";
             ee.limit = pivot.m_R2;
+            // TODO: maybe add more to target
             ee.target = pivot.m_R3;
             ee.stopLoss = pivot.m_typical - ee.spread;
          } else if (pivotRelativePosition > 1) { // Broke R1
             pivotPosition = "r1-r2";
             ee.limit = pivot.m_R1;
-            ee.target = pivot.m_R2;
+            ee.target = pivot.m_R3;
             ee.stopLoss = pivot.m_S1 - ee.spread;   
          } else if (pivotRelativePosition > 0) { // Above typical
             pivotPosition = "pp-r1";
             ee.limit = pivot.m_typical;
-            ee.target = pivot.m_R1;
+            ee.target = pivot.m_R2;
             ee.stopLoss = pivot.m_S2 - ee.spread;   
          } else if (pivotRelativePosition > -1) { // Below typical
             pivotPosition = "s1-pp";
             ee.limit = pivot.m_S1;
             ee.target = pivot.m_R1;
-            ee.stopLoss = pivot.m_S2 - ee.spread;      
+            ee.stopLoss = pivot.m_S3 - ee.spread;      
          } else if (pivotRelativePosition > -2) { // Broke S1
             pivotPosition = "s1-s2";
-            ee.limit = pivot.m_S1;
+            ee.limit = pivot.m_S2;
             ee.target = pivot.m_R1;
-            ee.stopLoss = pivot.m_S2 - ee.spread;  
+            ee.stopLoss = pivot.m_S3 - ee.spread;  
          } else { // Broke S2
             pivotPosition = "s2-bk";
             ee.limit = pivot.m_S3;
@@ -210,22 +211,23 @@ class EntryPointsPivot : public EntryPoints {
             pivotPosition = "pp-r1";
             ee.limit = pivot.m_R1;
             ee.target = pivot.m_S1;
-            ee.stopLoss = pivot.m_R2 + ee.spread;   
+            ee.stopLoss = pivot.m_R3 + ee.spread;   
          } else if (pivotRelativePosition > -1) { // Below typical
             pivotPosition = "s1-pp";
             ee.limit = pivot.m_typical;
             ee.target = pivot.m_S2;
-            ee.stopLoss = pivot.m_R1 + ee.spread;      
+            ee.stopLoss = pivot.m_R2 + ee.spread;      
          } else if (pivotRelativePosition > -2) { // Broke S1
             pivotPosition = "s1-s2";
             ee.limit = pivot.m_S1;
-            ee.target = pivot.m_S2;
-            ee.stopLoss = pivot.m_typical + ee.spread;  
+            ee.target = pivot.m_S3;
+            ee.stopLoss = pivot.m_R1 + ee.spread;  
          } else { // Broke S2
             pivotPosition = "s2-bk";
             ee.limit = pivot.m_S2;
+            // TODO: maybe add more to target
             ee.target = pivot.m_S3;
-            ee.stopLoss = pivot.m_typical + ee.spread;   
+            ee.stopLoss = pivot.m_R1 + ee.spread;   
          }
          ee.algo = StringFormat("PVT-%s-%s", signalOrigin, pivotPosition);
       }

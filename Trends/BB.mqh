@@ -59,7 +59,7 @@ void BBTrend::calculate(int period=20) {
 double BBTrend::getRelativePosition(void) {
    if (m_bbBottom == 0 || m_bbMiddle == 0 || m_bbTop == 0) return 0;
    
-   double price = (Ask - Bid) / 2;
+   double price = (Ask + Bid) / 2;
    double range = m_bbTop - m_bbBottom;
    
    return (price - m_bbMiddle) * m_stdDev / range;

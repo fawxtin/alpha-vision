@@ -20,6 +20,16 @@
 #define STOCH_OVERREGION 10
 
 
+/*
+ * AlphaVisionTrader Sequence:
+ *   -> init => set entry points schema
+ *   -> onTrendSetup
+ *     -> onTrendValidation | checkVolatility
+ *       -> onSignalTrade
+ *         | -> onBuySignal
+ *         | -> onSellSignal
+ */
+
 class AlphaVisionTrader : public Trader {
    protected:
       AlphaVisionSignals *m_signals;
