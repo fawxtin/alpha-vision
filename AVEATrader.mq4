@@ -13,13 +13,15 @@
 #include <Traders\ScalperTrader.mqh>
 #include <Traders\SwingTrader.mqh>
 #include <Traders\TrendTrader.mqh>
+#include <Traders\PivotTrader.mqh>
 
 
 enum TRADER_TYPES {
    TRADER_ORCHESTRA,
    TRADER_SCALPER,
    TRADER_SWING,
-   TRADER_TREND
+   TRADER_TREND,
+   TRADER_PIVOT
 };
 
 ////
@@ -93,6 +95,9 @@ int OnInit() {
          break;
       case TRADER_TREND:
          gTrader = new AlphaVisionTrendTrader(avSignals, iRiskAndRewardRatio);
+         break;
+      case TRADER_PIVOT:
+         gTrader = new AlphaVisionTraderPivot(avSignals, iRiskAndRewardRatio);
          break;
    }
    

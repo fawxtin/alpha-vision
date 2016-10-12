@@ -16,6 +16,7 @@
 #include <Trends\BB.mqh>
 #include <Trends\Stochastic.mqh>
 #include <Trends\MACD.mqh>
+#include <Trends\Pivot.mqh>
 
 #include <Signals\Signals.mqh>
 
@@ -29,6 +30,8 @@ class AlphaVision : public HashValue {
    public:
       RainbowTrend *m_rainbowFast;
       RainbowTrend *m_rainbowSlow;
+      PivotTrend *m_pivot;
+      PivotTrend *m_pivotSmooth;
       BBTrend *m_bb;
       BBTrend *m_bb3;
       BBTrend *m_bb4;
@@ -37,10 +40,12 @@ class AlphaVision : public HashValue {
       ATRdelta *m_atr;
           
    
-      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow, BBTrend *bb, BBTrend *bb3, BBTrend *bb4,
-                  StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
+      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow, PivotTrend *pivot, PivotTrend *pivotSmooth,
+                  BBTrend *bb, BBTrend *bb3, BBTrend *bb4, StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
          m_rainbowFast = rainbowFast;
          m_rainbowSlow = rainbowSlow;
+         m_pivot = pivot;
+         m_pivotSmooth = pivotSmooth;
          m_bb = bb;
          m_bb3 = bb3;
          m_bb4 = bb4;
@@ -52,6 +57,8 @@ class AlphaVision : public HashValue {
       void ~AlphaVision() {
          delete m_rainbowFast;
          delete m_rainbowSlow;
+         delete m_pivot;
+         delete m_pivotSmooth;
          delete m_bb;
          delete m_bb3;
          delete m_bb4;
@@ -63,6 +70,8 @@ class AlphaVision : public HashValue {
       void calculate() {
          m_rainbowFast.calculate();
          m_rainbowSlow.calculate();
+         m_pivot.calculate();
+         m_pivotSmooth.calculate();
          m_bb.calculate();
          m_bb3.calculate();
          m_bb4.calculate();
@@ -87,6 +96,8 @@ class AlphaVisionSignals : public Signals {
          if (! m_hash.hContainsKey(tfKey)) {
             m_hash.hPut(tfKey, new AlphaVision(new RainbowTrend(timeframe),
                                                new RainbowTrend(timeframe, 20, 50, 200),
+                                               new PivotTrend(timeframe, PIVOT_5POINT, 0),
+                                               new PivotTrend(timeframe, PIVOT_5POINT_SMOOTH, 3),
                                                new BBTrend(timeframe),
                                                new BBTrend(timeframe, 3.0),
                                                new BBTrend(timeframe, 4.0),

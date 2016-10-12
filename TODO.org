@@ -2,6 +2,15 @@
 
 * Alpha Vision
 
+** Priorities
+
+*** TODO Pivot Points trending
+
+*** TODO Put $ 100 ($ 200 on margin) on balance
+
+*** TODO Implement SendNotification schema
+    For mobile warning/tracking
+
 ** Learning Techniques
 *** Ralph Vince - Mathematics for Market
     DEADLINE: <2016-10-22 sáb>
@@ -51,6 +60,7 @@
 | GBP/USD  |               |                         |                     1.26 |
 | USD/JPY  |               |                         |                     0.75 |
 | EUR/GBP  |               |                         |                     0.80 |
+| EUR/JPY  |               |                         |                     1.43 |
 | GOLD     |          2.04 |                         |                     2.03 |
 |----------+---------------+-------------------------+--------------------------|
 
@@ -68,7 +78,7 @@
 |----------+-----------+------------|
 | EUR/USD  |      1.08 |       1.29 |
 | GBP/USD  |           |       1.26 |
-| USD/JPY  |           |            |
+| USD/JPY  |           |       1.03 |
 | GOLD     |           |       2.03 |
 |----------+-----------+------------|
 
@@ -104,6 +114,9 @@
       and BB for entry/exit points.
 
 *** Trader timeframes
+
+**** TODO include more timeframes
+    5m / 15m (fast) / 1h (current) / 4h (major) / 1D / 1W (super) / 1M
 
 **** TODO pass positions to different timeframes handlers?
 

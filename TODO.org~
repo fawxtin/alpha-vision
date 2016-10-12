@@ -4,7 +4,7 @@
 
 ** Learning Techniques
 *** Ralph Vince - Mathematics for Market
-    DEADLINE: <2016-09-28 qua>
+    DEADLINE: <2016-10-22 sáb>
     Provide a schedule and a resume on the subject.
 
 *** Quantitative Trading and Money Management
@@ -20,10 +20,58 @@
 
 *** TODO flush file handler
 
-*** TODO provide a trend input structure / for each trend type
+*** provide a trend input structure / for each trend type
 
 ** Positions/Trader
    Deal with positions and execute entry/exit points.
+   onTrendSetup
+       |
+    sets trend and close counter trend positions
+       |
+   onTrendValidation
+       |
+     m_buy/sellSetupOk
+       |
+   onSignalTrade
+       |
+     look for indicators signals
+       |
+   onBuySignal | onSellSignal
+       |
+     calculates entry/exit points
+
+*** Testing results
+    from 01/July to 24/September
+    Gold using BBSmart on swing schema (the number of entries is much lower)
+
+|----------+---------------+-------------------------+--------------------------|
+| Currency | market always | market on high volality | market on low volatility |
+|----------+---------------+-------------------------+--------------------------|
+| EUR/USD  |          1.29 |                    0.81 |                     1.30 |
+| GBP/USD  |               |                         |                     1.26 |
+| USD/JPY  |               |                         |                     0.75 |
+| EUR/GBP  |               |                         |                     0.80 |
+| EUR/JPY  |               |                         |                     1.43 |
+| GOLD     |          2.04 |                         |                     2.03 |
+|----------+---------------+-------------------------+--------------------------|
+
+|----------+----------+---------------|
+| Currency | entry BB | entry BBSmart |
+|----------+----------+---------------|
+| EUR/USD  |     1.29 |          0.97 |
+| GBP/USD  |     1.26 |               |
+| USD/JPY  |          |               |
+| GOLD     |          |          2.04 |
+|----------+----------+---------------|
+
+|----------+-----------+------------|
+| Currency | fast 5min | fast 15min |
+|----------+-----------+------------|
+| EUR/USD  |      1.08 |       1.29 |
+| GBP/USD  |           |       1.26 |
+| USD/JPY  |           |       1.03 |
+| GOLD     |           |       2.03 |
+|----------+-----------+------------|
 
 
 *** TODO do *not* open new position near current placed position
@@ -31,7 +79,8 @@
     multiple positions with almost the same entry/exit price.
 
  
-*** TODO Organize trader algorithms
+*** TODO Work on Pivots
+    Another level of entry type. Can calculate probabilities on it.
 
 *** Improve Trader Algorithms
     DEADLINE: <2016-09-03 sáb>
@@ -66,8 +115,8 @@
 ** Signals Comparison
    Calculate and use Trends to capture signals.
    - SpreadSheet results formula:
-     =sum(FILTER(H2:H224, I2:I224 <> "cancelled", D2:D224 > "2000.01.01 00:00:00"))
-     =sum(filter(N2:N1113, regexmatch(O2:O1113, "[5]")))
+     =sum(FILTER(H2:H, I2:I <> "cancelled", D2:D > "2000.01.01 00:00:00"))
+     =sum(filter(N2:N, regexmatch(O2:O, "[5]")))
 
 *** TODO Algorithmic exits on bad entries
      on Overbought/Oversold entries going against it, can workout

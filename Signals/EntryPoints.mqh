@@ -139,4 +139,96 @@ class EntryPointsBBSmart : public EntryPoints {
       }
 };
 
+class EntryPointsPivot : public EntryPoints {
+   public:
+      EntryPointsPivot(AlphaVisionSignals *avSignals) : EntryPoints(avSignals) { }
+      
+      virtual void calculateBuyEntry(EntryExitSpot &ee, int timeframe, string signalOrigin) {
+         //AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
+         int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
+         AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
+         PivotTrend *pivot = avMj.m_pivot;
+   
+         string pivotPosition;
+         double pivotRelativePosition = pivot.getRelativePosition();
+
+         if (pivotRelativePosition > 2) { // Broke R2
+            pivotPosition = "r2-bk";
+            ee.limit = pivot.m_R2;
+            ee.target = pivot.m_R3;
+            ee.stopLoss = pivot.m_typical - ee.spread;
+         } else if (pivotRelativePosition > 1) { // Broke R1
+            pivotPosition = "r1-r2";
+            ee.limit = pivot.m_R1;
+            ee.target = pivot.m_R2;
+            ee.stopLoss = pivot.m_S1 - ee.spread;   
+         } else if (pivotRelativePosition > 0) { // Above typical
+            pivotPosition = "pp-r1";
+            ee.limit = pivot.m_typical;
+            ee.target = pivot.m_R1;
+            ee.stopLoss = pivot.m_S2 - ee.spread;   
+         } else if (pivotRelativePosition > -1) { // Below typical
+            pivotPosition = "s1-pp";
+            ee.limit = pivot.m_S1;
+            ee.target = pivot.m_R1;
+            ee.stopLoss = pivot.m_S2 - ee.spread;      
+         } else if (pivotRelativePosition > -2) { // Broke S1
+            pivotPosition = "s1-s2";
+            ee.limit = pivot.m_S1;
+            ee.target = pivot.m_R1;
+            ee.stopLoss = pivot.m_S2 - ee.spread;  
+         } else { // Broke S2
+            pivotPosition = "s2-bk";
+            ee.limit = pivot.m_S3;
+            ee.target = pivot.m_S1;
+            double range1 = pivot.m_typical - pivot.m_S1;
+            ee.stopLoss = pivot.m_S3 - range1 - ee.spread;   
+         }
+         ee.algo = StringFormat("PVT-%s-%s", signalOrigin, pivotPosition);
+      }
+      
+      virtual void calculateSellEntry(EntryExitSpot &ee, int timeframe, string signalOrigin) {
+         int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
+         AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
+         PivotTrend *pivot = avMj.m_pivot;
+   
+         string pivotPosition;
+         double pivotRelativePosition = pivot.getRelativePosition();
+
+         if (pivotRelativePosition > 2) { // Broke R2
+            pivotPosition = "r2-bk";
+            ee.limit = pivot.m_R3;
+            ee.target = pivot.m_R1;
+            double range1 = pivot.m_R1 - pivot.m_typical;
+            ee.stopLoss = pivot.m_R3 + range1 + ee.spread;
+         } else if (pivotRelativePosition > 1) { // Broke R1
+            pivotPosition = "r1-r2";
+            ee.limit = pivot.m_R2;
+            ee.target = pivot.m_typical;
+            ee.stopLoss = pivot.m_R3 + ee.spread;   
+         } else if (pivotRelativePosition > 0) { // Above typical
+            pivotPosition = "pp-r1";
+            ee.limit = pivot.m_R1;
+            ee.target = pivot.m_S1;
+            ee.stopLoss = pivot.m_R2 + ee.spread;   
+         } else if (pivotRelativePosition > -1) { // Below typical
+            pivotPosition = "s1-pp";
+            ee.limit = pivot.m_typical;
+            ee.target = pivot.m_S2;
+            ee.stopLoss = pivot.m_R1 + ee.spread;      
+         } else if (pivotRelativePosition > -2) { // Broke S1
+            pivotPosition = "s1-s2";
+            ee.limit = pivot.m_S1;
+            ee.target = pivot.m_S2;
+            ee.stopLoss = pivot.m_typical + ee.spread;  
+         } else { // Broke S2
+            pivotPosition = "s2-bk";
+            ee.limit = pivot.m_S2;
+            ee.target = pivot.m_S3;
+            ee.stopLoss = pivot.m_typical + ee.spread;   
+         }
+         ee.algo = StringFormat("PVT-%s-%s", signalOrigin, pivotPosition);
+      }
+};
+
 #endif
