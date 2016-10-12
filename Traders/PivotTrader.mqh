@@ -14,6 +14,7 @@ class AlphaVisionTraderPivot : public AlphaVisionTrader {
    public:
       AlphaVisionTraderPivot(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals) {
          m_riskAndRewardRatio = rr;
+         m_entries.hPut("PVT", new EntryPointsPivot(m_signals));
       }
       
       virtual void onSignalTrade(int timeframe);
