@@ -14,7 +14,7 @@ class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
    public:
       AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
          setTradeMarket(true);
-         m_entries.hPut("BB", new EntryPointsBB(m_signals));
+         m_entries.hPut("BB", new EntryPointsBBSmart(m_signals));
       }
       
       virtual void onTrendSetup(int timeframe);

@@ -50,7 +50,9 @@
      calculates entry/exit points
 
 *** Testing results
-    from 01/July to 24/September
+    Including Pivot tests
+    (was) from 01/July to 24/September
+    from 01/July to 7/October
     Gold using BBSmart on swing schema (the number of entries is much lower)
 
 |----------+---------------+-------------------------+--------------------------|
@@ -64,23 +66,15 @@
 | GOLD     |          2.04 |                         |                     2.03 |
 |----------+---------------+-------------------------+--------------------------|
 
-|----------+----------+---------------|
-| Currency | entry BB | entry BBSmart |
-|----------+----------+---------------|
-| EUR/USD  |     1.29 |          0.97 |
-| GBP/USD  |     1.26 |               |
-| USD/JPY  |          |               |
-| GOLD     |          |          2.04 |
-|----------+----------+---------------|
-
-|----------+-----------+------------|
-| Currency | fast 5min | fast 15min |
-|----------+-----------+------------|
-| EUR/USD  |      1.08 |       1.29 |
-| GBP/USD  |           |       1.26 |
-| USD/JPY  |           |       1.03 |
-| GOLD     |           |       2.03 |
-|----------+-----------+------------|
+|-----------------+------------+---------------+-------------|
+| Currency        | entry BB   | entry BBSmart | entry Pivot |
+|-----------------+------------+---------------+-------------|
+| EUR/USD (Orch)  | 1.42 (539) | 1.58 (599)    |             |
+| GBP/USD (Orch)  | 0.74 (420) | 0.54 (448)    |             |
+| USD/JPY (Pivot) |            |               |             |
+| EUR/JPY (Orch)  | 2.15 (506) | 3.16 (343)    |             |
+| GOLD (Pivot)    |            |               |        1.35 |
+|-----------------+------------+---------------+-------------|
 
 
 *** TODO do *not* open new position near current placed position
