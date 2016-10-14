@@ -32,7 +32,7 @@ class EntryPoints : public HashValue {
    public:
       EntryPoints(AlphaVisionSignals *avSignals) {
          m_signals = avSignals;
-         setEnabled(true);
+         setEnabled(false);
       }
       
       bool isEnabled() { return m_enabled; }

@@ -14,7 +14,8 @@ class AlphaVisionTraderScalper : public AlphaVisionTrader {
    public:
       AlphaVisionTraderScalper(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals) {
          m_riskAndRewardRatio = rr;
-         m_entries.hPut("BBSmart", new EntryPointsBBSmart(m_signals));
+         EntryPoints *entry = m_entries.hGet("BBSM");
+         entry.setEnabled(true);
       }
       
       virtual void onSignalTrade(int timeframe);

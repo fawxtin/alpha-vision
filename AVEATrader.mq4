@@ -11,16 +11,12 @@
 #include <Signals\AlphaVision.mqh>
 #include <Traders\OrchestraTrader.mqh>
 #include <Traders\ScalperTrader.mqh>
-#include <Traders\SwingTrader.mqh>
-#include <Traders\TrendTrader.mqh>
 #include <Traders\PivotTrader.mqh>
 
 
 enum TRADER_TYPES {
    TRADER_ORCHESTRA,
    TRADER_SCALPER,
-   TRADER_SWING,
-   TRADER_TREND,
    TRADER_PIVOT
 };
 
@@ -33,7 +29,7 @@ input bool iIsTest = false;
 input TRADER_TYPES iTrader = TRADER_ORCHESTRA;
 
 input double iLotSize = 0.01;
-input double iRiskAndRewardRatio = 2.0;
+input double iRiskAndRewardRatio = 1.0;
 
 input int iFastTimeFrame = PERIOD_M15;
 input int iMajorTimeFrame = PERIOD_H4;
@@ -89,12 +85,6 @@ int OnInit() {
          break;
       case TRADER_SCALPER:
          gTrader = new AlphaVisionTraderScalper(avSignals, iRiskAndRewardRatio);
-         break;
-      case TRADER_SWING:
-         gTrader = new AlphaVisionTraderSwing(avSignals, iRiskAndRewardRatio);
-         break;
-      case TRADER_TREND:
-         gTrader = new AlphaVisionTrendTrader(avSignals, iRiskAndRewardRatio);
          break;
       case TRADER_PIVOT:
          gTrader = new AlphaVisionTraderPivot(avSignals, iRiskAndRewardRatio);

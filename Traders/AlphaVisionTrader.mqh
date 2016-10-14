@@ -49,6 +49,9 @@ class AlphaVisionTrader : public Trader {
          m_buySetupOk = false;
          m_sellSetupOk = false;
          m_tradeMarket = false;
+         m_entries.hPut("BB", new EntryPointsBB(m_signals));
+         m_entries.hPut("BBSM", new EntryPointsBBSmart(m_signals));
+         m_entries.hPut("PVT", new EntryPointsPivot(m_signals));
       }
       
       void ~AlphaVisionTrader() { delete m_signals; delete m_entries; }
@@ -146,8 +149,10 @@ void AlphaVisionTrader::onBuySignal(int timeframe, double signalPrice, string si
    HashLoop *loop;
    for (loop = new HashLoop(m_entries); loop.hasNext(); loop.next()) {
       EntryPoints *entry = loop.val();
-      entry.calculateBuyEntry(ee, timeframe, signalOrig);
-      safeGoLong(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+      if (entry.isEnabled()) {
+         entry.calculateBuyEntry(ee, timeframe, signalOrig);
+         safeGoLong(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+      }
    }
    delete loop;
 
@@ -167,8 +172,10 @@ void AlphaVisionTrader::onSellSignal(int timeframe, double signalPrice, string s
    HashLoop *loop;
    for (loop = new HashLoop(m_entries); loop.hasNext(); loop.next()) {
       EntryPoints *entry = loop.val();
-      entry.calculateSellEntry(ee, timeframe, signalOrig);
-      safeGoShort(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+      if (entry.isEnabled()) {
+         entry.calculateSellEntry(ee, timeframe, signalOrig);
+         safeGoShort(timeframe, ee.limit, ee.target, ee.stopLoss, m_riskAndRewardRatio, ee.algo);
+      }
    }
    delete loop;
 
