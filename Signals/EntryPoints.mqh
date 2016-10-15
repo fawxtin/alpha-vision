@@ -188,8 +188,6 @@ class EntryPointsPivot : public EntryPoints {
                bottom = pivot.m_R1;
                break;
             case BETWEEN_PP_R1:
-               bottom = pivot.m_typical;
-               break;
             case BETWEEN_S1_PP:
                bottom = pivot.m_S1;
                break;
@@ -235,10 +233,8 @@ class EntryPointsPivot : public EntryPoints {
                top = pivot.m_R2;
                break;
             case BETWEEN_PP_R1:
-               top = pivot.m_R1;
-               break;
             case BETWEEN_S1_PP:
-               top = pivot.m_typical;
+               top = pivot.m_R1;
                break;
             case BETWEEN_S2_S1:
                top = pivot.m_S1;
@@ -262,6 +258,7 @@ class EntryPointsPivot : public EntryPoints {
          int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
          AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
          PivotTrend *pivot = avMj.m_pivot;
+         ATRdelta *atr = avMj.m_atr;
    
          string pivotPosition;
          int pivotCase = getPivotCase(pivot.getRelativePosition());
@@ -270,8 +267,7 @@ class EntryPointsPivot : public EntryPoints {
             case BETWEEN_R2_R3:
                pivotPosition = "r2-bk";
                ee.limit = pivot.m_R2;
-               // TODO: maybe add more to target
-               ee.target = pivot.m_R3;
+               ee.target = atr.getTargetProfitFor("LONG", Ask);
                ee.stopLoss = pivot.m_typical - ee.spread;
                break;
             case BETWEEN_R1_R2:
@@ -318,6 +314,7 @@ class EntryPointsPivot : public EntryPoints {
          int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
          AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
          PivotTrend *pivot = avMj.m_pivot;
+         ATRdelta *atr = avMj.m_atr;
    
          string pivotPosition;
          int pivotCase = getPivotCase(pivot.getRelativePosition());
@@ -362,9 +359,9 @@ class EntryPointsPivot : public EntryPoints {
             case BREAKOUT_S3:
                pivotPosition = "s2-bk";
                ee.limit = pivot.m_S2;
-               // TODO: maybe add more to target
-               ee.target = pivot.m_S3;
+               ee.target = atr.getTargetProfitFor("SHORT", Bid);
                ee.stopLoss = pivot.m_typical + ee.spread;   
+               break;
          }
          ee.algo = StringFormat("PVT-%s-%s", signalOrigin, pivotPosition);
       }

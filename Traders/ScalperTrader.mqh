@@ -25,6 +25,10 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
    // wont trade on high volatility
    if (m_volatility != TREND_VOLATILITY_LOW) return;
    
+   int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
+   AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
+   PivotTrend *pivot = avMj.m_pivot;
+   
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowFast = av.m_rainbowFast;
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
@@ -33,6 +37,7 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
 
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
+   TrendChange pivotTC = rainbowFast.getTrendHst();
    if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
@@ -46,6 +51,10 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
          onBuySignal(timeframe, rainbowSlow.m_ma3, "hma13");
       } else if (rainbowSlow.m_cross_2_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
          onBuySignal(timeframe, rainbowSlow.m_ma3, "hma23");
+      } else if (pivotTC.changed == true && pivotTC.current == TREND_POSITIVE && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+         onBuySignal(timeframe, rainbowFast.m_ma3, "pvt");
+      } else if (pivotTC.changed == true && pivotTC.current == TREND_POSITIVE_BREAKOUT && stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) {
+         onBuySignal(timeframe, rainbowFast.m_ma3, "pvtBrk");
       }
    }
    
@@ -62,6 +71,10 @@ void AlphaVisionTraderScalper::onSignalTrade(int timeframe) {
          onSellSignal(timeframe, rainbowSlow.m_ma3, "hma13");
       } else if (rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
          onSellSignal(timeframe, rainbowSlow.m_ma3, "hma23");
+      } else if (pivotTC.changed == true && pivotTC.current == TREND_NEGATIVE && stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+         onSellSignal(timeframe, rainbowFast.m_ma3, "pvt");
+      } else if (pivotTC.changed == true && pivotTC.current == TREND_NEGATIVE_BREAKOUT && stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) {
+         onSellSignal(timeframe, rainbowFast.m_ma3, "pvtBrk");
       }
    }
 }

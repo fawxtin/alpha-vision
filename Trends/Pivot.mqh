@@ -76,20 +76,20 @@ void PivotTrend::calculate(void) {
 void PivotTrend::calcTrend(void) {
    double relativePosition = getRelativePosition();
 
-   if (relativePosition > 2) {
+   if (relativePosition > 3) {
       setTrendHst(TREND_POSITIVE_BREAKOUT);
    } else if (relativePosition > 1) {
       setTrendHst(TREND_POSITIVE);
    } else if (relativePosition > -1) {
       setTrendHst(TREND_NEUTRAL);
-   } else if (relativePosition > -2) {
+   } else if (relativePosition > -3) {
       setTrendHst(TREND_NEGATIVE);
    } else {
       setTrendHst(TREND_NEGATIVE_BREAKOUT);
    }
 }
 
-void PivotTrend::calcFivePoint(double high,double low,double close) {
+void PivotTrend::calcFivePoint(double high, double low, double close) {
    m_typical = (high + low + close)/3;
    m_R1 = (m_typical * 2) - low;
    m_S1 = (m_typical * 2) - high;
@@ -116,11 +116,12 @@ void PivotTrend::methodFivePointSmooth(void) {
 double PivotTrend::getRelativePosition() {
    double price = (Ask + Bid) / 2;
    double range1 = m_R1 - m_S1;
+   double middle = (m_R1 + m_S1) / 2;
    double range2 = m_R2 - m_S2;
    m_ppDiff = MathAbs(price - m_typical);
    double relative = 0;
    
-   if (range1 > 0) relative = (price - m_typical) / range1;
+   if (range1 > 0) relative = (price - middle) / range1;
 
    string algoType = EnumToString((PivotSystem) m_pivotType);
    string tfStr = EnumToString((ENUM_TIMEFRAMES) m_timeframe);
