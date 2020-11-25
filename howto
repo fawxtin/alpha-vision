@@ -1,0 +1,15 @@
+
+
+# Download mt4 from xm.com
+
+# Install wine & winetricks
+sudo apt-get install winbind
+
+export WINEPREFIX=~/.wine32
+export WINEARCH=win32
+
+wineboot -u
+winetricks -q mdac28
+winetricks -q ole32
+winetricks -q dotnet472
+
