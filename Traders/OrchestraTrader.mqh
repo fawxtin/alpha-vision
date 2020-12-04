@@ -57,10 +57,14 @@ void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
 }
 
 void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
+   int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
+   AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
+   SupportAndResistanceTrend *supAndRes = av.m_supportAndResistance;
    RainbowTrend *rainbowFast = av.m_rainbowFast;
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
+   StochasticTrend *stochMj = avMj.m_stoch;
    MACDTrend *macd = av.m_macd;
 
    if (m_volatility == TREND_VOLATILITY_LOW) setTradeMarket(true);
@@ -68,7 +72,8 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
 
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
-   if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
+   if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD &&
+       supAndRes.getTrend() != TREND_POSITIVE_BREAKOUT) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
          onBuySignal(timeframe, rainbowFast.m_ma3, "rainbow");
@@ -84,7 +89,8 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
       }
    }
    
-   if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) { // SELL SETUP
+   if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD &&
+       supAndRes.getTrend() != TREND_NEGATIVE_BREAKOUT) { // SELL SETUP
       if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
           stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          onSellSignal(timeframe, rainbowFast.m_ma3, "rainbow");
