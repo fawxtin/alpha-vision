@@ -12,7 +12,7 @@
 
 class AlphaVisionTraderHMA12 : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
+      AlphaVisionTraderHMA12(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
          setTradeMarket(true);
          EntryPoints *entry = m_entries.hGet("BBSM");
          entry.setEnabled(true);
@@ -56,7 +56,7 @@ void AlphaVisionTraderHMA12::onTrendSetup(int timeframe) {
    onTrendValidation(timeframe);
 }
 
-void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
+void AlphaVisionTraderHMA12::onSignalTrade(int timeframe) {
    int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);

@@ -27,7 +27,7 @@ class SupportAndResistanceTrend : public Trend {
       double m_resistance;
       double m_support;
       
-      SupportandresistanceTrend(int timeframe, int smoothness=12) {
+      SupportAndResistanceTrend(int timeframe, int smoothness=12) {
          m_timeframe = timeframe;
          m_trendType = "SupportAndResistance";
          m_smoothness = smoothness;
@@ -39,7 +39,7 @@ class SupportAndResistanceTrend : public Trend {
       double getRelativePosition();
 };
 
-void SupportandresistanceTrend::calculate(void) {
+void SupportAndResistanceTrend::calculate(void) {
    int barHigh = iHighest(Symbol(), PERIOD_W1, MODE_HIGH, m_smoothness, 2);
    int barLow = iLowest(Symbol(), PERIOD_W1, MODE_LOW, m_smoothness, 2);
 
@@ -49,7 +49,7 @@ void SupportandresistanceTrend::calculate(void) {
    calcTrend();
 }
 
-void SupportandresistanceTrend::calcTrend(void) {
+void SupportAndResistanceTrend::calcTrend(void) {
    double relativePosition = getRelativePosition();
 
    if (relativePosition > 1) {
@@ -61,7 +61,7 @@ void SupportandresistanceTrend::calcTrend(void) {
    }
 }
 
-double SupportandresistanceTrend::getRelativePosition() {
+double SupportAndResistanceTrend::getRelativePosition() {
    double price = (Ask + Bid) / 2;
    double range = m_resistance - m_support;
    double middle = (m_resistance + m_support) / 2;

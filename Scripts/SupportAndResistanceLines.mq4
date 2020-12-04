@@ -12,8 +12,8 @@
 input string iPositions = "LONG&SHORT";
 input int iSmoothness1 = 12;
 input int iSmoothness2 = 30;
-input int iSmoothness3 = 55;
-input int iSmoothness4 = 120;
+input int iSmoothness3 = 120;
+input int iSmoothness4 = 300;
 
 void OnStart() {
    int barHighW1 = iHighest(Symbol(), PERIOD_W1, MODE_HIGH, iSmoothness1, 1);
