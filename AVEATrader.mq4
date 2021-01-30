@@ -12,12 +12,16 @@
 #include <Traders\OrchestraTrader.mqh>
 #include <Traders\ScalperTrader.mqh>
 #include <Traders\PivotTrader.mqh>
+#include <Traders\HMA12Trader.mqh>
+#include <Traders\HMA12RainbowTrader.mqh>
 
 
 enum TRADER_TYPES {
    TRADER_ORCHESTRA,
    TRADER_SCALPER,
-   TRADER_PIVOT
+   TRADER_PIVOT,
+   TRADER_HMA12,
+   TRADER_HMA12RAINBOW
 };
 
 ////
@@ -89,6 +93,12 @@ int OnInit() {
       case TRADER_PIVOT:
          gTrader = new AlphaVisionTraderPivot(avSignals, iRiskAndRewardRatio);
          break;
+      case TRADER_HMA12:
+	gTrader = new AlphaVisionTraderHMA12(avSignals, iRiskAndRewardRatio);
+	break;
+      case TRADER_HMA12RAINBOW:
+	gTrader = new AlphaVisionTraderHMA12Rainbow(avSignals, iRiskAndRewardRatio);
+	break;
    }
    
    gTrader.setLotSize(iLotSize);

@@ -17,6 +17,7 @@
 #include <Trends\Stochastic.mqh>
 #include <Trends\MACD.mqh>
 #include <Trends\Pivot.mqh>
+#include <Trends\SupportAndResistances.mqh>
 
 #include <Signals\Signals.mqh>
 
@@ -30,6 +31,7 @@ class AlphaVision : public HashValue {
    public:
       RainbowTrend *m_rainbowFast;
       RainbowTrend *m_rainbowSlow;
+      SupportAndResistanceTrend *m_supportAndResistance;
       PivotTrend *m_pivot;
       PivotTrend *m_pivotSmooth;
       BBTrend *m_bb;
@@ -40,10 +42,13 @@ class AlphaVision : public HashValue {
       ATRdelta *m_atr;
           
    
-      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow, PivotTrend *pivot, PivotTrend *pivotSmooth,
-                  BBTrend *bb, BBTrend *bb3, BBTrend *bb4, StochasticTrend *stoch, MACDTrend *macd, ATRdelta *atr) {
+      AlphaVision(RainbowTrend *rainbowFast, RainbowTrend *rainbowSlow,
+		  SupportAndResistanceTrend *supAndRes, PivotTrend *pivot, PivotTrend *pivotSmooth,
+                  BBTrend *bb, BBTrend *bb3, BBTrend *bb4, StochasticTrend *stoch,
+		  MACDTrend *macd, ATRdelta *atr) {
          m_rainbowFast = rainbowFast;
          m_rainbowSlow = rainbowSlow;
+	 m_supportAndResistance = supAndRes;
          m_pivot = pivot;
          m_pivotSmooth = pivotSmooth;
          m_bb = bb;
@@ -57,6 +62,7 @@ class AlphaVision : public HashValue {
       void ~AlphaVision() {
          delete m_rainbowFast;
          delete m_rainbowSlow;
+         delete m_supportAndResistance;
          delete m_pivot;
          delete m_pivotSmooth;
          delete m_bb;
@@ -70,6 +76,7 @@ class AlphaVision : public HashValue {
       void calculate() {
          m_rainbowFast.calculate();
          m_rainbowSlow.calculate();
+	 m_supportAndResistance.calculate();
          m_pivot.calculate();
          m_pivotSmooth.calculate();
          m_bb.calculate();
@@ -96,6 +103,7 @@ class AlphaVisionSignals : public Signals {
          if (! m_hash.hContainsKey(tfKey)) {
             m_hash.hPut(tfKey, new AlphaVision(new RainbowTrend(timeframe),
                                                new RainbowTrend(timeframe, 20, 50, 200),
+					       new SupportAndResistanceTrend(timeframe, 12),
                                                new PivotTrend(timeframe, PIVOT_5POINT, 0),
                                                new PivotTrend(timeframe, PIVOT_5POINT_SMOOTH, 3),
                                                new BBTrend(timeframe),

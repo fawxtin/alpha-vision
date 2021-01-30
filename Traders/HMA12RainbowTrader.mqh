@@ -10,9 +10,9 @@
 #include <Traders\AlphaVisionTrader.mqh>
 
 
-class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
+class AlphaVisionTraderHMA12Rainbow : public AlphaVisionTrader {
    public:
-      AlphaVisionTraderOrchestra(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
+      AlphaVisionTraderHMA12Rainbow(AlphaVisionSignals *signals, double rr): AlphaVisionTrader(signals, rr) {
          setTradeMarket(true);
          EntryPoints *entry = m_entries.hGet("BBSM");
          entry.setEnabled(true);
@@ -26,7 +26,7 @@ class AlphaVisionTraderOrchestra : public AlphaVisionTrader {
 ///
 /// Using RainbowSlow as MAIN Trend
 ///
-void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
+void AlphaVisionTraderHMA12Rainbow::onTrendSetup(int timeframe) {
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
@@ -56,11 +56,10 @@ void AlphaVisionTraderOrchestra::onTrendSetup(int timeframe) {
    onTrendValidation(timeframe);
 }
 
-void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
+void AlphaVisionTraderHMA12Rainbow::onSignalTrade(int timeframe) {
    int mjTimeframe = m_signals.getTimeFrameAbove(timeframe);
    AlphaVision *av = m_signals.getAlphaVisionOn(timeframe);
    AlphaVision *avMj = m_signals.getAlphaVisionOn(mjTimeframe);
-   SupportAndResistanceTrend *supAndRes = av.m_supportAndResistance;
    RainbowTrend *rainbowFast = av.m_rainbowFast;
    RainbowTrend *rainbowSlow = av.m_rainbowSlow;
    StochasticTrend *stoch = av.m_stoch;
@@ -72,37 +71,21 @@ void AlphaVisionTraderOrchestra::onSignalTrade(int timeframe) {
 
    // using fast trend signals and current trend BB positioning
    TrendChange rFast = rainbowFast.getTrendHst();
-   if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD &&
-       supAndRes.getTrend() != TREND_POSITIVE_BREAKOUT) { // BUY SETUP
+   if (m_buySetupOk && stoch.m_signal < STOCH_OVERBOUGHT_THRESHOLD) { // BUY SETUP
       if (rFast.changed == true && rFast.current == TREND_POSITIVE && 
           stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
          onBuySignal(timeframe, rainbowFast.m_ma3, "rainbow");
-      } else if (macd.getTrend() == TREND_POSITIVE_FROM_NEGATIVE &&
-                 stoch.m_signal <= STOCH_OVERSOLD_THRESHOLD) { // crossing up
-         onBuySignal(timeframe, rainbowFast.m_ma3, "macd");
       } else if (rainbowSlow.m_cross_1_2.current == TREND_POSITIVE_FROM_NEGATIVE) {
          onBuySignal(timeframe, rainbowSlow.m_ma2, "hma12");
-      } else if (rainbowSlow.m_cross_1_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
-         onBuySignal(timeframe, rainbowSlow.m_ma3, "hma13");
-      } else if (rainbowSlow.m_cross_2_3.current == TREND_POSITIVE_FROM_NEGATIVE) {
-         onBuySignal(timeframe, rainbowSlow.m_ma3, "hma23");
       }
    }
    
-   if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD &&
-       supAndRes.getTrend() != TREND_NEGATIVE_BREAKOUT) { // SELL SETUP
+   if (m_sellSetupOk && stoch.m_signal > STOCH_OVERSOLD_THRESHOLD) { // SELL SETUP
       if (rFast.changed == true && rFast.current == TREND_NEGATIVE && 
           stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
          onSellSignal(timeframe, rainbowFast.m_ma3, "rainbow");
-      } else if (macd.getTrend() == TREND_NEGATIVE_FROM_POSITIVE &&
-                 stoch.m_signal >= STOCH_OVERBOUGHT_THRESHOLD) { // crossing down
-         onSellSignal(timeframe, rainbowFast.m_ma3, "macd");
       } else if (rainbowSlow.m_cross_1_2.current == TREND_NEGATIVE_FROM_POSITIVE) {
          onSellSignal(timeframe, rainbowSlow.m_ma2, "hma12");
-      } else if (rainbowSlow.m_cross_1_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
-         onSellSignal(timeframe, rainbowSlow.m_ma3, "hma13");
-      } else if (rainbowSlow.m_cross_2_3.current == TREND_NEGATIVE_FROM_POSITIVE) {
-         onSellSignal(timeframe, rainbowSlow.m_ma3, "hma23");
       }
    }
 }
